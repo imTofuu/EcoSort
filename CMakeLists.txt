@@ -1,0 +1,37 @@
+cmake_minimum_required(VERSION 3.30)
+
+set(CMAKE_CXX_STANDARD 20)
+
+# Declare a new project
+project(RecyclingGame)
+
+# Add the subdirectory for libraries. This will run the CMakeLists.txt in the lib directory which fetches
+# the libraries and makes them available for linking in this file.
+add_subdirectory(lib)
+
+# Create a new target called RecyclingGame
+add_executable(RecyclingGame
+        src/main.cpp
+        src/Game.h
+        src/Game.cpp
+)
+
+# Add include directories to the RecyclingGame target, which will be used to find header files when they
+# are included in source or header files. These added directories are PRIVATE, which means any target
+# which links this target will not inherit these include directories.
+target_include_directories(RecyclingGame PRIVATE
+        lib/glfw/include
+        lib/glad/include
+)
+
+# Link the RecyclingGame target to the libraries fetched in the lib directory.
+target_link_libraries(RecyclingGame 
+        glfw
+        glad
+)
+
+# Add the GLFW_INCLUDE_NONE preprocessor definition to the RecyclingGame target. This is used to tell
+# GLFW not to include OpenGL headers because I want to use the glad symbols.
+target_compile_definitions(RecyclingGame PRIVATE
+        GLFW_INCLUDE_NONE
+)

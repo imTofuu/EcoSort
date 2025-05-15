@@ -16,6 +16,10 @@ add_executable(RecyclingGame
         src/Game.cpp
         src/Interface/Logger.tpp
         src/Interface/Logger.h
+        src/Interface/Window.cpp
+        src/Interface/Window.h
+        src/Interface/Interface.h
+        src/Interface/Interface.cpp
 )
 
 # Add include directories to the RecyclingGame target, which will be used to find header files when they

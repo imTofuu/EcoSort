@@ -14,6 +14,8 @@ add_executable(RecyclingGame
         src/main.cpp
         src/Game.h
         src/Game.cpp
+        src/Interface/Logger.tpp
+        src/Interface/Logger.h
 )
 
 # Add include directories to the RecyclingGame target, which will be used to find header files when they
@@ -22,6 +24,9 @@ add_executable(RecyclingGame
 target_include_directories(RecyclingGame PRIVATE
         lib/glfw/include
         lib/glad/include
+        
+                                        PUBLIC
+        src
 )
 
 # Link the RecyclingGame target to the libraries fetched in the lib directory.
@@ -35,3 +40,12 @@ target_link_libraries(RecyclingGame
 target_compile_definitions(RecyclingGame PRIVATE
         GLFW_INCLUDE_NONE
 )
+
+# Add a PUBLIC compile definition (definition will be inherited to targets that link this one) that
+# if CMake is being built in debug so debug features (such as the debug log severity) can be preprocessed
+# out in release builds.
+if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        target_compile_definitions(RecyclingGame PUBLIC
+                RG_DEBUG
+        )
+endif()

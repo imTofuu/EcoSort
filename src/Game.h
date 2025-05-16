@@ -1,5 +1,7 @@
 #pragma once
+
 #include "Interface/Logger.h"
+#include "Scene/Scene.h"
 
 namespace RecyclingGame {
 
@@ -17,6 +19,8 @@ namespace RecyclingGame {
     private:
 
         static Game* s_instance;
+
+        Scene m_scene;
 
         Logger m_logger = Logger("RecyclingGame");
         

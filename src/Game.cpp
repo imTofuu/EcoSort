@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 
 #include "Interface/Window.h"
+#include "Scene/Object.h""
 
 namespace RecyclingGame {
 
@@ -32,6 +33,9 @@ namespace RecyclingGame {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+        Object object = m_scene.createObject();
+        int* intcomp = object.addComponent<int>();
+
         // Create a new scope so the window will be destroyed once the main loop has finished.
         {
             Window window("RecyclingGame", 500, 500);
@@ -46,6 +50,8 @@ namespace RecyclingGame {
             // While the window is open, i.e., the operating system has not requested for it to be closed.
             while (window.isOpen()) {
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                *intcomp ++;
 
                 // Poll events in GLFW, which will handle OS events and user interfaces, such as the keyboard and mouse.
                 glfwPollEvents();

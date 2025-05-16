@@ -20,6 +20,10 @@ add_executable(RecyclingGame
         src/Interface/Window.h
         src/Interface/Interface.h
         src/Interface/Interface.cpp
+        src/Scene/Scene.h
+        src/Scene/Object.h
+        src/Scene/Scene.cpp
+        src/Scene/Object.cpp
 )
 
 # Add include directories to the RecyclingGame target, which will be used to find header files when they
@@ -28,6 +32,7 @@ add_executable(RecyclingGame
 target_include_directories(RecyclingGame PRIVATE
         lib/glfw/include
         lib/glad/include
+        lib/boo/include
         
                                         PUBLIC
         src
@@ -37,6 +42,7 @@ target_include_directories(RecyclingGame PRIVATE
 target_link_libraries(RecyclingGame 
         glfw
         glad
+        boo
 )
 
 # Add the GLFW_INCLUDE_NONE preprocessor definition to the RecyclingGame target. This is used to tell

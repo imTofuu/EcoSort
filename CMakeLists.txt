@@ -9,6 +9,11 @@ project(RecyclingGame)
 # the libraries and makes them available for linking in this file.
 add_subdirectory(lib)
 
+# Set the executable output directory for builds and add copy_assets target to this file so res can be copied into the
+# same directory as the executable
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+add_subdirectory(res)
+
 # Create a new target called RecyclingGame
 add_executable(RecyclingGame
         src/main.cpp
@@ -24,7 +29,17 @@ add_executable(RecyclingGame
         src/Scene/Object.h
         src/Scene/Scene.cpp
         src/Scene/Object.cpp
+        src/Graphics/VertexBuffer.cpp
+        src/Graphics/VertexBuffer.h
+        src/Graphics/VertexArray.h
+        src/Graphics/VertexArray.cpp
+        src/Graphics/Shader.h
+        src/Graphics/Shader.cpp
+        src/Graphics/ShaderProgram.h
+        src/Graphics/ShaderProgram.cpp
 )
+
+add_dependencies(RecyclingGame copy_assets)
 
 # Add include directories to the RecyclingGame target, which will be used to find header files when they
 # are included in source or header files. These added directories are PRIVATE, which means any target
@@ -59,3 +74,12 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
                 RG_DEBUG
         )
 endif()
+
+# Configure installation to go into a folder with the resources.
+install(TARGETS RecyclingGame
+        RUNTIME DESTINATION bin
+)
+install(DIRECTORY res/
+        DESTINATION bin/res
+        FILES_MATCHING PATTERN "*.*"
+)

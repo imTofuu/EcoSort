@@ -3,6 +3,8 @@
 #include "Interface/Logger.h"
 #include "Scene/Scene.h"
 
+#define LOGGER RecyclingGame::Game::getInstance()->getLogger()
+
 namespace RecyclingGame {
 
     class Game {

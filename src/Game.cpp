@@ -3,8 +3,10 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
+#include "Graphics/Shader.h"
+#include "Graphics/VertexArray.h"
 #include "Interface/Window.h"
-#include "Scene/Object.h""
+#include "Graphics/ShaderProgram.h"
 
 namespace RecyclingGame {
 
@@ -41,82 +43,40 @@ namespace RecyclingGame {
             // null. The symbols are loaded here because glfwGetProcAddress requires a context to be current on the
             // main thread, which is done in the Window.
             gladLoadGL(glfwGetProcAddress);
+
+            // Tell OpenGL to only call the fragment shader for front faces, decided by the winding of their vertices
+            glEnable(GL_CULL_FACE);
+            glCullFace(GL_BACK);
+            glFrontFace(GL_CCW);
             
             float vertices[] = {
-                -0.5f, -0.5f, 0,
-                0.5f, -0.5f, 0,
-                0.5f, 0.5f, 0,
-                0.5f, 0.5f, 0,
-                -0.5f, 0.5f, 0,
-                -0.5f, -0.5f, 0,
+                -0.5f,  0.5f, 0.0f,
+                -0.5f, -0.5f, 0.0f,
+                 0.5f,  0.5f, 0.0f,
+                
+                -0.5f, -0.5f, 0.0f,
+                 0.5f, -0.5f, 0.0f,
+                 0.5f,  0.5f, 0.0f
             };
             
-            unsigned int vbo;
-            glGenBuffers(1, &vbo);
+            VertexBuffer vbo;
+            vbo.bind();
+            vbo.setData(vertices, sizeof(vertices), DataUsage::STATIC_DRAW);
 
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            VertexArray vao;
+            vao.bind();
+            vao.setBuffer(0, vbo, DataType::FLOAT, DataElements::THREE);
 
-            glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+            Shader vertexShader("res/Shaders/test.vs", ShaderType::VERT);
+            Shader fragShader("res/Shaders/test.fs", ShaderType::FRAG);
 
-            unsigned int vao;
-            glGenVertexArrays(1, &vao);
-
-            glBindVertexArray(vao);
-
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-            glEnableVertexAttribArray(0);
-
-            unsigned int vshader, fshader;
-            vshader = glCreateShader(GL_VERTEX_SHADER);
-            fshader = glCreateShader(GL_FRAGMENT_SHADER);
-
-            const char* vshaderSource = "#version 410 core\n"
-            "\n"
-            "in vec3 a_position;\n"
-            "void main() {\n"
-            "   gl_Position = vec4(a_position, 1.0f);\n"
-            "}\0";
-
-            const char* fshaderSource = "#version 410 core\n"
-            "\n"
-            "out vec4 fragColour;\n"
-            "void main() {\n"
-            "   fragColour = vec4(0.0f, 0.0f, 1.0f, 1.0f);\n"
-            "}\0";
-
-            glShaderSource(vshader, 1, &vshaderSource, nullptr);
-            glCompileShader(vshader);
-            glShaderSource(fshader, 1, &fshaderSource, nullptr);
-            glCompileShader(fshader);
-
-            int success;
-            char infoLog[512];
-            glGetShaderiv(vshader, GL_COMPILE_STATUS, &success);
-            if (!success) {
-                glGetShaderInfoLog(vshader, 512, nullptr, infoLog);
-                m_logger.error("Vertex shader compilation failed: {}", infoLog);
-            }
-            glGetShaderiv(fshader, GL_COMPILE_STATUS, &success);
-            if (!success) {
-                glGetShaderInfoLog(fshader, 512, nullptr, infoLog);
-                m_logger.error("Fragment shader compilation failed: {}", infoLog);
-            }
-
-            m_logger.info("{}", glGetError());
-
-            unsigned int shaderProgram = glCreateProgram();
+            ShaderProgram shaderProgram;
+            shaderProgram.attachShader(vertexShader);
+            shaderProgram.attachShader(fragShader);
             
-            glAttachShader(shaderProgram, vshader);
-            glAttachShader(shaderProgram, fshader);
-            glLinkProgram(shaderProgram);
-
-            glUseProgram(shaderProgram);            
-
-            glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-            if (!success) {
-                glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
-                m_logger.error("Shader program linking failed: {}", infoLog);
-            }
+            shaderProgram.link();
+            
+            shaderProgram.use();
 
             glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 

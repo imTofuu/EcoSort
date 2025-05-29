@@ -3,8 +3,7 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
-#include "Graphics/Shader.h"
-#include "Graphics/VertexArray.h"
+#include "AssetFetcher.h"
 #include "Interface/Window.h"
 #include "Graphics/ShaderProgram.h"
 
@@ -41,32 +40,26 @@ namespace RecyclingGame {
 
             // Load the OpenGL symbols using glad. This is required, otherwise all the OpenGL function pointers will be
             // null. The symbols are loaded here because glfwGetProcAddress requires a context to be current on the
-            // main thread, which is done in the Window.
+            // main thread, which is done in the Window initialisation.
             gladLoadGL(glfwGetProcAddress);
 
             // Tell OpenGL to only call the fragment shader for front faces, decided by the winding of their vertices
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
             glFrontFace(GL_CCW);
-            
-            float vertices[] = {
-                -0.5f,  0.5f, 0.0f,
-                -0.5f, -0.5f, 0.0f,
-                 0.5f,  0.5f, 0.0f,
-                
-                -0.5f, -0.5f, 0.0f,
-                 0.5f, -0.5f, 0.0f,
-                 0.5f,  0.5f, 0.0f
-            };
-            
-            VertexBuffer vbo;
-            vbo.bind();
-            vbo.setData(vertices, sizeof(vertices), DataUsage::STATIC_DRAW);
 
-            VertexArray vao;
-            vao.bind();
-            vao.setBuffer(0, vbo, DataType::FLOAT, DataElements::THREE);
+            // Enable depth testing so that the fragment shader not called for fragments that are behind other
+            // fragments.
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LESS);
 
+            // Tell OpenGL how to blend semi-transparent or fully transparent fragments with what is behind it.
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glBlendEquation(GL_FUNC_ADD);
+
+            std::shared_ptr<Mesh> mesh = AssetFetcher::meshFromPath("res/Models/Suzanne.obj");
+            
             Shader vertexShader("res/Shaders/test.vs", ShaderType::VERT);
             Shader fragShader("res/Shaders/test.fs", ShaderType::FRAG);
 
@@ -79,18 +72,33 @@ namespace RecyclingGame {
             shaderProgram.use();
 
             glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            
+            glfwSwapInterval(1);
 
-            // While the window is open, i.e., the operating system has not requested for it to be closed.
+            double startTime = glfwGetTime();
+            int frames = 0;
+            
+            // While the window is open, i.e. the operating system has not requested for it to be closed.
             while (window.isOpen()) {
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                glDrawArrays(GL_TRIANGLES, 0, 6);
+                
+                mesh->draw();
 
                 // Poll events in GLFW, which will handle OS events and user interfaces, such as the keyboard and mouse.
                 glfwPollEvents();
 
                 // Swap the buffers of the window.
                 window.update();
+
+                frames++;
+
+                // Reset and display the fps counter if a second has passed
+                if (double time = glfwGetTime(); time - startTime > 1.0) {
+                    window.setTitle(std::format("Recycling Game ({} FPS)", frames).c_str());
+                    frames = 0;
+                    startTime = time;
+                }
+                
             }
         }
 

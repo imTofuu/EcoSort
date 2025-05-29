@@ -27,9 +27,17 @@ FetchContent_Declare(
         
         SOURCE_DIR    ${PROJECT_SOURCE_DIR}/lib/boo
 )
+FetchContent_Declare(
+        tinyobj
+        GIT_REPOSITORY https://github.com/tinyobjloader/tinyobjloader.git
+        GIT_TAG        release
+        GIT_SHALLOW    TRUE
+        
+        SOURCE_DIR    ${PROJECT_SOURCE_DIR}/lib/tinyobj
+)
 
 # Run the CMakeLists files in the libraries.
-FetchContent_MakeAvailable(glfw glad_fetch boo)
+FetchContent_MakeAvailable(glfw glad_fetch boo tinyobj)
 
 # Declare a new glad target which will be built on project build. It will be linked at build time with 
 # the main executable target.

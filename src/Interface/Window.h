@@ -13,6 +13,8 @@ namespace RecyclingGame {
         ~Window();
 
         void update();
+        
+        void setTitle(const char* title) { glfwSetWindowTitle(m_window, title); }
 
         [[nodiscard]] bool isOpen() const { return !glfwWindowShouldClose(m_window); }
         

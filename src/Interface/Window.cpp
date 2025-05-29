@@ -25,8 +25,11 @@ namespace RecyclingGame {
     Window::Window(const char* name, int width, int height) {
 
         m_window = glfwCreateWindow(width, height, name, nullptr, nullptr);
-        glfwMakeContextCurrent(m_window);
 
+        // Sets the OpenGL context in the window that was just created as current on this thread. This means that any
+        // OpenGL calls on this thread will affect that context.
+        glfwMakeContextCurrent(m_window);
+        
         glfwSetWindowUserPointer(m_window, this);
 
         glfwSetKeyCallback(m_window, glfwKeyCallback);

@@ -10,6 +10,8 @@ namespace RecyclingGame {
     // Declare and compile a shader from the source found in a file at path.
     Shader::Shader(const char* path, ShaderType type) : m_type(type) {
 
+        LOGGER.debug("Reading shader source from path: {}", path);
+
         m_handle = glCreateShader(static_cast<GLenum>(type));
         std::string shaderSource;
 

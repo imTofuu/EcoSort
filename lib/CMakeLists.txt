@@ -35,9 +35,31 @@ FetchContent_Declare(
         
         SOURCE_DIR    ${PROJECT_SOURCE_DIR}/lib/tinyobj
 )
+FetchContent_Declare(
+        glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG        master
+        GIT_SHALLOW    TRUE
+        
+        SOURCE_DIR    ${PROJECT_SOURCE_DIR}/lib/glm
+)
+FetchContent_Declare(
+        stbimage
+        GIT_REPOSITORY https://github.com/nothings/stb.git
+        GIT_TAG        master
+        GIT_SHALLOW    TRUE
+        
+        SOURCE_DIR    ${PROJECT_SOURCE_DIR}/lib/stbimage
+)
 
 # Run the CMakeLists files in the libraries.
-FetchContent_MakeAvailable(glfw glad_fetch boo tinyobj)
+FetchContent_MakeAvailable(glfw glad_fetch boo tinyobj glm)
+
+add_library(stbimage STATIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/stb_image.cpp
+)
+
+target_include_directories(stbimage PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/stbimage)
 
 # Declare a new glad target which will be built on project build. It will be linked at build time with 
 # the main executable target.

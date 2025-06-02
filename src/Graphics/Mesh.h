@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #include "IndexBuffer.h"
@@ -26,7 +27,9 @@ namespace RecyclingGame {
 
         VertexArray m_vao;
         std::shared_ptr<IndexBuffer> m_ibo;
+        
         std::vector<std::shared_ptr<VertexBuffer>> m_buffers;
+        
         unsigned int m_indexCount = 0;
         
     };

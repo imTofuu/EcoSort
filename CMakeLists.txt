@@ -42,7 +42,9 @@ add_executable(RecyclingGame
         src/AssetFetcher.cpp
         src/AssetFetcher.h
         src/Graphics/Mesh.h
-        src/Graphics/MEsh.cpp
+        src/Graphics/Mesh.cpp
+        src/Graphics/Texture.h
+        src/Graphics/Texture.cpp
 )
 
 add_dependencies(RecyclingGame copy_assets)
@@ -55,6 +57,8 @@ target_include_directories(RecyclingGame PRIVATE
         lib/glad/include
         lib/boo/include
         lib/tinyobj
+        lib/glm
+        lib/stbimage
                                         PUBLIC
         src
 )
@@ -65,6 +69,8 @@ target_link_libraries(RecyclingGame
         glad
         boo
         tinyobjloader
+        glm
+        stbimage
 )
 
 # Add the GLFW_INCLUDE_NONE preprocessor definition to the RecyclingGame target. This is used to tell

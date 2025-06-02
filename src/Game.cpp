@@ -6,6 +6,7 @@
 #include "AssetFetcher.h"
 #include "Interface/Window.h"
 #include "Graphics/ShaderProgram.h"
+#include "Graphics/Texture.h"
 
 namespace RecyclingGame {
 
@@ -18,6 +19,8 @@ namespace RecyclingGame {
 
     void Game::run() {
 
+        m_logger.info("Initialising game");
+
         // If GLFW has an error, it will call this function where I log the error.
         glfwSetErrorCallback(glfwErrorCallback);
 
@@ -26,6 +29,7 @@ namespace RecyclingGame {
         // Initialise GLFW so a window can be created.
         result = glfwInit();
         m_logger.assert(result, "Failed to initialize GLFW");
+        m_logger.debug("Initialised GLFW");
 
         // Specify the version of OpenGL that will be used as a window hint. The window hints will apply to all windows
         // created after they are set. This project uses GL 4.1 core, since it is the most recent version supported by
@@ -37,11 +41,14 @@ namespace RecyclingGame {
         // Create a new scope so the window will be destroyed once the main loop has finished.
         {
             Window window("RecyclingGame", 500, 500);
+            m_logger.info("Initialised window");
 
             // Load the OpenGL symbols using glad. This is required, otherwise all the OpenGL function pointers will be
             // null. The symbols are loaded here because glfwGetProcAddress requires a context to be current on the
             // main thread, which is done in the Window initialisation.
-            gladLoadGL(glfwGetProcAddress);
+            result = gladLoadGL(glfwGetProcAddress);
+            m_logger.assert(result, "Failed to initialize GLAD");
+            m_logger.debug("OpenGL Version: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
 
             // Tell OpenGL to only call the fragment shader for front faces, decided by the winding of their vertices
             glEnable(GL_CULL_FACE);
@@ -60,9 +67,9 @@ namespace RecyclingGame {
 
             std::shared_ptr<Mesh> mesh = AssetFetcher::meshFromPath("res/Models/Suzanne.obj");
             
-            Shader vertexShader("res/Shaders/test.vs", ShaderType::VERT);
-            Shader fragShader("res/Shaders/test.fs", ShaderType::FRAG);
-
+            Shader vertexShader("res/Shaders/test.vert", ShaderType::VERT);
+            Shader fragShader("res/Shaders/test.frag", ShaderType::FRAG);
+            
             ShaderProgram shaderProgram;
             shaderProgram.attachShader(vertexShader);
             shaderProgram.attachShader(fragShader);
@@ -70,6 +77,13 @@ namespace RecyclingGame {
             shaderProgram.link();
             
             shaderProgram.use();
+
+            shaderProgram.setInt("texture1", 0);
+            shaderProgram.setInt("texture2", 1);
+
+            Texture texture;
+            texture.bind(0);
+            texture.setData("res/Textures/img.png");
 
             glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
             

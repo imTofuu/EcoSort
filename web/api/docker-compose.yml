@@ -1,0 +1,26 @@
+services:
+  pg:
+    image: postgres:latest
+    container_name: pg
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: default
+    ports:
+      - "5432"
+    volumes:
+      - ./pg:/var/lib/postgresql/data
+  
+  api:
+    image: node:latest
+    container_name: api
+    working_dir: /usr/src/app
+    volumes:
+      - ./:/usr/src/app
+    command: sh -c "chmod +x ./local-start.sh && ./local-start.sh"
+    environment:
+      DATABASE_URL: postgres://user:password@pg:5432/default
+    ports:
+        - "3000:3000"
+    depends_on:
+        - pg

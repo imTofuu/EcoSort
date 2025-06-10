@@ -21,7 +21,7 @@ services:
     environment:
       DATABASE_URL: postgres://user:password@pg:5432/default
     labels:
-      - "coolify.domain=https://l2dtsdrecyclinggame.drewbryan.org:3000/api"
+      - coolify.domain=https://l2dtsdrecyclinggame.drewbryan.org:3000/api
     ports:
         - "3000:3000"
     depends_on:

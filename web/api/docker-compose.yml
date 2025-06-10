@@ -20,6 +20,8 @@ services:
     command: sh -c "chmod +x ./local-start.sh && ./local-start.sh"
     environment:
       DATABASE_URL: postgres://user:password@pg:5432/default
+    labels:
+      - "coolify.domain=l2dtsdrecyclinggame.drewbryan.org:3000/api"
     ports:
         - "3000:3000"
     depends_on:

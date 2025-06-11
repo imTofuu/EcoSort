@@ -7,10 +7,10 @@ const pool = new Pool({
     url: process.env.DATABASE_URL,
 });
 
-expressapp.get("ping", (req, res) => {
+expressapp.get("/ping", (req, res) => {
     res.status(200).json({ message: "pong" });
 });
 
 expressapp.listen(3000, () => {
     console.log("Server is running on port 3000");
-})
+});

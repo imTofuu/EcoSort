@@ -17,7 +17,7 @@ services:
     working_dir: /usr/src/app
     volumes:
       - ./:/usr/src/app
-    command: sh -c "cd web/api/ && chmod +x ./local-start.sh && ./local-start.sh"
+    command: sh -c "ls && cd ./web/api/ && chmod +x ./local-start.sh && ./local-start.sh"
     environment:
       DATABASE_URL: postgres://user:password@pg:5432/default
     labels:

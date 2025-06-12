@@ -1,4 +1,4 @@
-# L2DTSDRecyclingGame
+# EcoSort
 
 ## Overview
 

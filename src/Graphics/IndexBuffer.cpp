@@ -2,7 +2,7 @@
 
 #include <glad/gl.h>
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     IndexBuffer::IndexBuffer() : m_handle(0), m_count(0) {
         glGenBuffers(1, &m_handle);

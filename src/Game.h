@@ -3,9 +3,9 @@
 #include "Interface/Logger.h"
 #include "Scene/Scene.h"
 
-#define LOGGER RecyclingGame::Game::getInstance()->getLogger()
+#define LOGGER EcoSort::Game::getInstance()->getLogger()
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     class Game {
     public:
@@ -24,7 +24,7 @@ namespace RecyclingGame {
 
         Scene m_scene;
 
-        Logger m_logger = Logger("RecyclingGame");
+        Logger m_logger = Logger("EcoSort");
         
     };
     

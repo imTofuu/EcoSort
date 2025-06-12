@@ -2,7 +2,7 @@
 
 #include <Game.h>
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     ShaderProgram::ShaderProgram() {
         m_handle = glCreateProgram();

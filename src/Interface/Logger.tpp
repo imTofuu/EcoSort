@@ -2,7 +2,7 @@
 #include <csignal>
 #include <iostream>
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     template<typename... Args>
     void Logger::assert(bool condition, const std::string& message, Args... args) {

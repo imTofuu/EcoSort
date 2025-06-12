@@ -2,7 +2,7 @@
 
 #include <Game.h>
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
         auto* windowPtr = static_cast<Window*>(glfwGetWindowUserPointer(window));

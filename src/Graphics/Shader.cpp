@@ -5,7 +5,7 @@
 
 #include "Game.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     // Declare and compile a shader from the source found in a file at path.
     Shader::Shader(const char* path, ShaderType type) : m_type(type) {

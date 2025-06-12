@@ -2,7 +2,7 @@
 
 #include <glad/gl.h>
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     enum class DataUsage {
         STATIC_DRAW = GL_STATIC_DRAW,

@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     enum class Key {
         ESCAPE = GLFW_KEY_ESCAPE, F1 = GLFW_KEY_F1, F2 = GLFW_KEY_F2, F3 = GLFW_KEY_F3, F4 = GLFW_KEY_F4,

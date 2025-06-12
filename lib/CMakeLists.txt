@@ -53,7 +53,7 @@ FetchContent_Declare(
 )
 
 # Run the CMakeLists files in the libraries.
-FetchContent_MakeAvailable(glfw glad_fetch boo tinyobj glm)
+FetchContent_MakeAvailable(glfw glad_fetch boo tinyobj glm stbimage)
 
 add_library(stbimage STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/stb_image.cpp

@@ -2,7 +2,7 @@
 
 #include <BOO/BOO.h>
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     class Object;
 

@@ -8,7 +8,7 @@
 #include "Graphics/ShaderProgram.h"
 #include "Graphics/Texture.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     Game* Game::s_instance = nullptr;
 
@@ -40,7 +40,7 @@ namespace RecyclingGame {
 
         // Create a new scope so the window will be destroyed once the main loop has finished.
         {
-            Window window("RecyclingGame", 500, 500);
+            Window window("EcoSort", 500, 500);
             m_logger.info("Initialised window");
 
             // Load the OpenGL symbols using glad. This is required, otherwise all the OpenGL function pointers will be

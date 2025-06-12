@@ -1,6 +1,6 @@
 #include "Interface.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
     
     void Interface::handleKeyAction(int action, int key) {
         if (action == GLFW_PRESS) {

@@ -4,7 +4,7 @@
 #include "stb_image.h"
 #include "glad/gl.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     Texture::Texture() : m_handle(0) {
         glGenTextures(1, &m_handle);

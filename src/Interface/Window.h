@@ -4,7 +4,7 @@
 
 #include "Interface.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     class Window {
     public:

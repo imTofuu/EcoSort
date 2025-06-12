@@ -1,6 +1,6 @@
 #pragma once
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     class Texture {
     public:

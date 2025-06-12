@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     class Logger {
     public:

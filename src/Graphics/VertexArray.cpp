@@ -1,6 +1,6 @@
 #include "VertexArray.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     VertexArray::VertexArray() : m_handle(0) {
         glGenVertexArrays(1, &m_handle);

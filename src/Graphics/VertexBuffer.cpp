@@ -1,6 +1,6 @@
 #include "VertexBuffer.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     VertexBuffer::VertexBuffer(DataUsage usage) : m_handle(0), m_usage(usage) {
         glGenBuffers(1, &m_handle);

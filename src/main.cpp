@@ -2,9 +2,9 @@
 
 int main() {
     
-    RecyclingGame::Game game;
+    EcoSort::Game game;
 
-    RecyclingGame::Game::setInstance(&game);
+    EcoSort::Game::setInstance(&game);
 
     game.run();
     

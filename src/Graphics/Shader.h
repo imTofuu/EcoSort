@@ -2,7 +2,7 @@
 
 #include <glad/gl.h>
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     enum class ShaderType {
         VERT = GL_VERTEX_SHADER,

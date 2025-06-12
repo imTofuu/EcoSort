@@ -2,7 +2,7 @@
 
 #include "Scene.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     class Scene;
 

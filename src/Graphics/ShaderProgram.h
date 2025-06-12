@@ -4,7 +4,7 @@
 
 #include "Shader.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     class ShaderProgram {
     public:

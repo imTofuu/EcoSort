@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.30)
 set(CMAKE_CXX_STANDARD 20)
 
 # Declare a new project
-project(RecyclingGame)
+project(EcoSort)
 
 # Add the subdirectory for libraries. This will run the CMakeLists.txt in the lib directory which fetches
 # the libraries and makes them available for linking in this file.
@@ -14,8 +14,8 @@ add_subdirectory(lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_subdirectory(res)
 
-# Create a new target called RecyclingGame
-add_executable(RecyclingGame
+# Create a new target called EcoSort
+add_executable(EcoSort
         src/main.cpp
         src/Game.h
         src/Game.cpp
@@ -47,12 +47,12 @@ add_executable(RecyclingGame
         src/Graphics/Texture.cpp
 )
 
-add_dependencies(RecyclingGame copy_assets)
+add_dependencies(EcoSort copy_assets)
 
-# Add include directories to the RecyclingGame target, which will be used to find header files when they
+# Add include directories to the EcoSort target, which will be used to find header files when they
 # are included in source or header files. These added directories are PRIVATE, which means any target
 # which links this target will not inherit these include directories.
-target_include_directories(RecyclingGame PRIVATE
+target_include_directories(EcoSort PRIVATE
         lib/glfw/include
         lib/glad/include
         lib/boo/include
@@ -63,8 +63,8 @@ target_include_directories(RecyclingGame PRIVATE
         src
 )
 
-# Link the RecyclingGame target to the libraries fetched in the lib directory.
-target_link_libraries(RecyclingGame 
+# Link the EcoSort target to the libraries fetched in the lib directory.
+target_link_libraries(EcoSort 
         glfw
         glad
         boo
@@ -73,9 +73,9 @@ target_link_libraries(RecyclingGame
         stbimage
 )
 
-# Add the GLFW_INCLUDE_NONE preprocessor definition to the RecyclingGame target. This is used to tell
+# Add the GLFW_INCLUDE_NONE preprocessor definition to the EcoSort target. This is used to tell
 # GLFW not to include OpenGL headers because I want to use the glad symbols.
-target_compile_definitions(RecyclingGame PRIVATE
+target_compile_definitions(EcoSort PRIVATE
         GLFW_INCLUDE_NONE
 )
 
@@ -83,13 +83,13 @@ target_compile_definitions(RecyclingGame PRIVATE
 # if CMake is being built in debug so debug features (such as the debug log severity) can be preprocessed
 # out in release builds.
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        target_compile_definitions(RecyclingGame PUBLIC
+        target_compile_definitions(EcoSort PUBLIC
                 RG_DEBUG
         )
 endif()
 
 # Configure installation to go into a folder with the resources.
-install(TARGETS RecyclingGame
+install(TARGETS EcoSort
         RUNTIME DESTINATION bin
 )
 install(DIRECTORY res/

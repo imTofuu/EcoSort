@@ -4,7 +4,7 @@
 
 #include "Graphics/Mesh.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     class AssetFetcher {
     public:

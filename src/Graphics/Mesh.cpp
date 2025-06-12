@@ -2,7 +2,7 @@
 
 #include "Game.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     void Mesh::setVertices(std::shared_ptr<VertexBuffer>& vbo) {
         // Always use index 0 for positions for simplicity

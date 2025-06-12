@@ -5,7 +5,7 @@
 #include "Game.h"
 #include <string>
 
-namespace RecyclingGame {
+namespace EcoSort {
     
     struct Vertex {
         int positionIndex, normalIndex, uvIndex;
@@ -23,8 +23,8 @@ namespace RecyclingGame {
 // This hash function is used by the stl in objects like unordered_maps which use hashing
 // as keys. It hashes the individual fields in the struct to make a new unique hash.
 template<>
-struct std::hash<RecyclingGame::Vertex> {
-    size_t operator()(const RecyclingGame::Vertex& vertex) const noexcept {
+struct std::hash<EcoSort::Vertex> {
+    size_t operator()(const EcoSort::Vertex& vertex) const noexcept {
         size_t h1 = std::hash<int>()(vertex.positionIndex);
         size_t h2 = std::hash<int>()(vertex.normalIndex);
         size_t h3 = std::hash<int>()(vertex.uvIndex);
@@ -32,7 +32,7 @@ struct std::hash<RecyclingGame::Vertex> {
     }
 };
 
-namespace RecyclingGame {
+namespace EcoSort {
     std::shared_ptr<Mesh> AssetFetcher::meshFromPath(const char* path) {
 
         LOGGER.debug("Reading mesh from path: {}", path);

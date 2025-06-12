@@ -2,7 +2,7 @@
 
 #include "VertexBuffer.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     class VertexArray {
     public:

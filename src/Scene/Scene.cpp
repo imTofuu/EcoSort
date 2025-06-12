@@ -2,7 +2,7 @@
 
 #include "Object.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     Object Scene::createObject() {
         return Object(*this);

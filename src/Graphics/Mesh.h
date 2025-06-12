@@ -7,7 +7,7 @@
 #include "IndexBuffer.h"
 #include "VertexArray.h"
 
-namespace RecyclingGame {
+namespace EcoSort {
 
     class Mesh {
     public:

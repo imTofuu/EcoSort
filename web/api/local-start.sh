@@ -2,12 +2,11 @@
 
 npm install
 
-while ! (echo > /dev/tcp/pg/5432) > /dev/null 2>&1; do
-  sleep 1
-done
+echo "Waiting for db to be ready... (im in pain)"
+sleep 20
 
+echo "Migrating now. If this fails, check db logs and restart this container."
 npx prisma migrate deploy
 
-echo hello
-
+echo "Starting application"
 npm run start

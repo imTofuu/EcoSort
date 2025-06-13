@@ -17,12 +17,9 @@ services:
     working_dir: /usr/src/app
     volumes:
       - ./:/usr/src/app
-    command: sh -c "ls -R | grep ":$" && cd ./web/api/ && chmod +x ./local-start.sh && ./local-start.sh"
+    command: sh -c "chmod +x ./local-start.sh && ./local-start.sh"
     environment:
       DATABASE_URL: postgres://user:password@pg:5432/default
-    labels:
-      - coolify.domain=https://l2dtsdrecyclinggame.drewbryan.org:3000/api
-      - coolify.type=node
     ports:
         - "3000:3000"
     depends_on:

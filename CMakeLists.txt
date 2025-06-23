@@ -45,6 +45,8 @@ add_executable(EcoSort
         src/Graphics/Mesh.cpp
         src/Graphics/Texture.h
         src/Graphics/Texture.cpp
+        src/Scene/Components.h
+        src/Scene/Components.cpp
 )
 
 add_dependencies(EcoSort copy_assets)

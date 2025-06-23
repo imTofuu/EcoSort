@@ -2,12 +2,17 @@
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 #include "AssetFetcher.h"
 #include "Interface/Window.h"
 #include "Graphics/ShaderProgram.h"
 #include "Graphics/Texture.h"
+#include "Scene/Components.h"
 #include "Scene/Object.h"
+
+#undef assert
 
 namespace EcoSort {
     Game *Game::s_instance = nullptr;
@@ -64,19 +69,18 @@ namespace EcoSort {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glBlendEquation(GL_FUNC_ADD);
 
-            std::shared_ptr<Mesh> mesh = AssetFetcher::meshFromPath("res/Models/Suzanne.obj");
-            
-            Shader vertexShader("res/Shaders/test.vert", ShaderType::VERT);
-            Shader fragShader("res/Shaders/test.frag", ShaderType::FRAG);
-            
+            Object camera = m_scene.createObject();
+            auto cameracomp = camera.addComponent<CameraComponent>();
+            auto cameraTransform = camera.addComponent<TransformComponent>();
+
+            cameraTransform->position = glm::vec3(0.0f, 0.0f, -5.0f);
+
             Object object = m_scene.createObject();
 
-            // Testing mesh data will not be deleted when it is copied
-            object.addComponent<int>();
+            object.addComponent<TransformComponent>();
+            
             auto tmpmesh = object.addComponent<Mesh>();
-            object.addComponent<float>();
             *tmpmesh = *AssetFetcher::meshFromPath("res/Models/Suzanne.obj");
-            object.addComponent<char>();
 
             Shader vertexShader("res/Shaders/forward.vert", ShaderType::VERT);
             Shader fragShader("res/Shaders/forward.frag", ShaderType::FRAG);
@@ -103,11 +107,32 @@ namespace EcoSort {
             double startTime = glfwGetTime();
             int frames = 0;
 
+            int f = 0;
+
             // While the window is open, i.e. the operating system has not requested for it to be closed.
             while (window.isOpen()) {
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                for (auto &[mesh]: m_scene.findAll<Mesh>()) {
+                cameraTransform->rotation.x = (glm::degrees(glm::cos((f * 2 * glm::pi<float>()) / 1000)) / 4);
+                cameraTransform->rotation.y = (glm::degrees(glm::sin((f * 2 * glm::pi<float>()) / 1000)) / 4);
+
+                f++;
+
+                auto projection = glm::perspective(
+                    glm::radians(cameracomp->fov),
+                    1.0f, 0.1f, 100.0f
+                    );
+
+                auto view = cameraTransform->getTransformation();
+                
+                shaderProgram.setMat4("u_projection", glm::value_ptr(projection));
+                shaderProgram.setMat4("u_view", glm::value_ptr(view));
+
+                for (auto& [mesh, transform]: m_scene.findAll<Mesh, TransformComponent>()) {
+
+                    auto model = transform->getTransformation();
+                    shaderProgram.setMat4("u_model", glm::value_ptr(model));
+                    
                     mesh->draw();
                 }
 

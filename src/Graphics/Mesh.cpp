@@ -6,7 +6,7 @@ namespace EcoSort {
 
     void Mesh::setVertices(std::shared_ptr<VertexBuffer>& vbo) {
         // Always use index 0 for positions for simplicity
-        m_vao.setBuffer(0, *vbo, DataType::FLOAT, DataElements::THREE);
+        m_vao->setBuffer(0, *vbo, DataType::FLOAT, DataElements::THREE);
         // Keep an owning reference of the vbo to ensure the data is kept alive until it is not necessary any more
         m_buffers.emplace_back(vbo);
     }
@@ -17,7 +17,7 @@ namespace EcoSort {
     }
 
     void Mesh::setVertices(const float* data, unsigned int vertices) {
-        m_vao.bind();
+        m_vao->bind();
         auto vbo = std::make_shared<VertexBuffer>();
         vbo->bind();
         vbo->setData(data, vertices * sizeof(float) * 3);
@@ -39,7 +39,7 @@ namespace EcoSort {
                 m_buffers.size());
             index = m_buffers.size();
         }
-        m_vao.setBuffer(index, *vbo, type, elements);
+        m_vao->setBuffer(index, *vbo, type, elements);
         // Keep an owning reference of the vbo to ensure the data is kept alive until it is not necessary any more
         m_buffers.emplace_back(vbo);
     }
@@ -56,7 +56,7 @@ namespace EcoSort {
             LOGGER.warn("Mesh has no indices");
             return;
         }
-        m_vao.bind();
+        m_vao->bind();
         m_ibo->bind();
         glDrawElements(GL_TRIANGLES, static_cast<GLint>(m_indexCount), GL_UNSIGNED_INT, nullptr);
     }

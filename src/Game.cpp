@@ -7,18 +7,17 @@
 #include "Interface/Window.h"
 #include "Graphics/ShaderProgram.h"
 #include "Graphics/Texture.h"
+#include "Scene/Object.h"
 
 namespace EcoSort {
+    Game *Game::s_instance = nullptr;
 
-    Game* Game::s_instance = nullptr;
-
-    void glfwErrorCallback(int error, const char* description) {
+    void glfwErrorCallback(int error, const char *description) {
         static Logger logger("GLFW");
         logger.error("Error {}: {}", error, description);
     }
 
     void Game::run() {
-
         m_logger.info("Initialising game");
 
         // If GLFW has an error, it will call this function where I log the error.
@@ -48,7 +47,7 @@ namespace EcoSort {
             // main thread, which is done in the Window initialisation.
             result = gladLoadGL(glfwGetProcAddress);
             m_logger.assert(result, "Failed to initialize GLAD");
-            m_logger.debug("OpenGL Version: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+            m_logger.debug("OpenGL Version: {}", reinterpret_cast<const char *>(glGetString(GL_VERSION)));
 
             // Tell OpenGL to only call the fragment shader for front faces, decided by the winding of their vertices
             glEnable(GL_CULL_FACE);
@@ -70,12 +69,24 @@ namespace EcoSort {
             Shader vertexShader("res/Shaders/test.vert", ShaderType::VERT);
             Shader fragShader("res/Shaders/test.frag", ShaderType::FRAG);
             
+            Object object = m_scene.createObject();
+
+            // Testing mesh data will not be deleted when it is copied
+            object.addComponent<int>();
+            auto tmpmesh = object.addComponent<Mesh>();
+            object.addComponent<float>();
+            *tmpmesh = *AssetFetcher::meshFromPath("res/Models/Suzanne.obj");
+            object.addComponent<char>();
+
+            Shader vertexShader("res/Shaders/forward.vert", ShaderType::VERT);
+            Shader fragShader("res/Shaders/forward.frag", ShaderType::FRAG);
+
             ShaderProgram shaderProgram;
             shaderProgram.attachShader(vertexShader);
             shaderProgram.attachShader(fragShader);
-            
+
             shaderProgram.link();
-            
+
             shaderProgram.use();
 
             shaderProgram.setInt("texture1", 0);
@@ -86,17 +97,19 @@ namespace EcoSort {
             texture.setData("res/Textures/img.png");
 
             glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-            
+
             glfwSwapInterval(1);
 
             double startTime = glfwGetTime();
             int frames = 0;
-            
+
             // While the window is open, i.e. the operating system has not requested for it to be closed.
             while (window.isOpen()) {
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                
-                mesh->draw();
+
+                for (auto &[mesh]: m_scene.findAll<Mesh>()) {
+                    mesh->draw();
+                }
 
                 // Poll events in GLFW, which will handle OS events and user interfaces, such as the keyboard and mouse.
                 glfwPollEvents();
@@ -112,12 +125,10 @@ namespace EcoSort {
                     frames = 0;
                     startTime = time;
                 }
-                
             }
         }
 
         // Clean up GLFW
         glfwTerminate();
     }
-    
 }

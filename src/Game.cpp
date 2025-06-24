@@ -73,11 +73,11 @@ namespace EcoSort {
             auto cameracomp = camera.addComponent<CameraComponent>();
             auto cameraTransform = camera.addComponent<TransformComponent>();
 
-            cameraTransform->position = glm::vec3(0.0f, 0.0f, -5.0f);
+            cameraTransform->position = glm::vec3(0.0f, 0.0f, -7.0f);
 
             Object object = m_scene.createObject();
-
-            object.addComponent<TransformComponent>();
+            auto objectTransform = object.addComponent<TransformComponent>();
+            objectTransform->scale.x = 3;
             
             auto tmpmesh = object.addComponent<Mesh>();
             *tmpmesh = *AssetFetcher::meshFromPath("res/Models/Suzanne.obj");
@@ -113,8 +113,11 @@ namespace EcoSort {
             while (window.isOpen()) {
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                cameraTransform->rotation.x = (glm::degrees(glm::cos((f * 2 * glm::pi<float>()) / 1000)) / 4);
-                cameraTransform->rotation.y = (glm::degrees(glm::sin((f * 2 * glm::pi<float>()) / 1000)) / 4);
+                //cameraTransform->rotation.x = (glm::degrees(glm::cos((f * 2 * glm::pi<float>()) / 1000)) / 4);
+                //cameraTransform->rotation.y = (glm::degrees(glm::sin((f * 2 * glm::pi<float>()) / 1000)) / 4);
+
+                objectTransform->position.x = glm::sin((f * 2 * glm::pi<float>()) / 1000) * 2.0f;
+                objectTransform->position.z = glm::cos((f * 2 * glm::pi<float>()) / 1000) * 2.0f;
 
                 f++;
 

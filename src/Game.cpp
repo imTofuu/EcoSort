@@ -6,6 +6,7 @@
 #include "glm/gtc/type_ptr.hpp"
 
 #include "AssetFetcher.h"
+#include "Graphics/Framebuffer.h"
 #include "Interface/Window.h"
 #include "Graphics/ShaderProgram.h"
 #include "Graphics/Texture.h"
@@ -54,6 +55,8 @@ namespace EcoSort {
             m_logger.assert(result, "Failed to initialize GLAD");
             m_logger.debug("OpenGL Version: {}", reinterpret_cast<const char *>(glGetString(GL_VERSION)));
 
+            glClearColor(0, 0, 0, 1);
+
             // Tell OpenGL to only call the fragment shader for front faces, decided by the winding of their vertices
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
@@ -67,42 +70,106 @@ namespace EcoSort {
             // Tell OpenGL how to blend semi-transparent or fully transparent fragments with what is behind it.
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glBlendEquation(GL_FUNC_ADD);
+
+            int vpWidth, vpHeight;
+            window.getFramebufferSize(&vpWidth, &vpHeight);
+            glViewport(0, 0, vpWidth, vpHeight);
+
+            Framebuffer gFramebuffer;
+            
+            Texture gPositions;
+            Texture gNormals;
+            Texture gAlbedos;
+            Texture gDepth;
+
+            gFramebuffer.bind();
+
+            gDepth.bind(0);
+            gDepth.setData(nullptr, vpWidth, vpHeight, TextureType::DEPTH);
+            gFramebuffer.addDepthAttachment(gDepth);
+
+            gPositions.bind(0);
+            gPositions.setData(nullptr, vpWidth, vpHeight, DataType::FLOAT);
+            gFramebuffer.addColorAttachment(gPositions, 0);
+            gNormals.bind(1);
+            gNormals.setData(nullptr, vpWidth, vpHeight, DataType::FLOAT);
+            gFramebuffer.addColorAttachment(gNormals, 1);
+            gAlbedos.bind(2);
+            gAlbedos.setData(nullptr, vpWidth, vpHeight);
+            gFramebuffer.addColorAttachment(gAlbedos, 2);
+
+            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+                LOGGER.error("Framebuffer is not complete!");
+            }
+
+            Framebuffer lightingFramebuffer;
+            lightingFramebuffer.bind();
+
+            Texture lightingTexture;
+            
+            lightingTexture.bind(0);
+            lightingTexture.setData(nullptr, vpWidth, vpHeight);
+            lightingFramebuffer.addColorAttachment(lightingTexture, 0);
+
+            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+                LOGGER.error("Framebuffer is not complete!");
+            }
+
+            Framebuffer::unbind();
+
+            Shader gBufferVertShader("res/Shaders/gbuffer.vert", ShaderType::VERT);
+            Shader gBufferFragShader("res/Shaders/gbuffer.frag", ShaderType::FRAG);
+            Shader lightingVertShader("res/Shaders/lighting.vert", ShaderType::VERT);
+            Shader lightingFragShader("res/Shaders/lighting.frag", ShaderType::FRAG);
+            Shader finalVertShader("res/Shaders/final.vert", ShaderType::VERT);
+            Shader finalFragShader("res/Shaders/final.frag", ShaderType::FRAG);
+
+            ShaderProgram gBufferShaderProgram;
+            gBufferShaderProgram.attachShader(gBufferVertShader);
+            gBufferShaderProgram.attachShader(gBufferFragShader);
+            gBufferShaderProgram.link();
+
+            gBufferShaderProgram.use();
+            gBufferShaderProgram.setInt("tex", 0);
+
+            ShaderProgram lightingShaderProgram;
+            lightingShaderProgram.attachShader(lightingVertShader);
+            lightingShaderProgram.attachShader(lightingFragShader);
+            lightingShaderProgram.link();
+
+            lightingShaderProgram.use();
+            lightingShaderProgram.setInt("gPositions", 0);
+            lightingShaderProgram.setInt("gNormals", 1);
+            lightingShaderProgram.setInt("gAlbedos", 2);
+
+            ShaderProgram finalShaderProgram;
+            finalShaderProgram.attachShader(finalVertShader);
+            finalShaderProgram.attachShader(finalFragShader);
+            finalShaderProgram.link();
+
+            finalShaderProgram.use();
+            finalShaderProgram.setInt("screen", 0);
+
+            auto screenMesh = AssetFetcher::meshFromPath("res/Models/Fullscreen.obj");
+            
+            Texture texture;
+            texture.bind(0);
+            texture.setData("res/Textures/img.png");
+
+            glfwSwapInterval(1);
 
             Object camera = m_scene.createObject();
             auto cameracomp = camera.addComponent<CameraComponent>();
             auto cameraTransform = camera.addComponent<TransformComponent>();
 
-            cameraTransform->position = glm::vec3(0.0f, 0.0f, -7.0f);
+            cameraTransform->position = glm::vec3(0.0f, 0.0f, -10.0f);
 
             Object object = m_scene.createObject();
             auto objectTransform = object.addComponent<TransformComponent>();
-            objectTransform->scale.x = 3;
+            objectTransform->scale.x = 1;
             
             auto tmpmesh = object.addComponent<Mesh>();
             *tmpmesh = *AssetFetcher::meshFromPath("res/Models/Suzanne.obj");
-
-            Shader vertexShader("res/Shaders/forward.vert", ShaderType::VERT);
-            Shader fragShader("res/Shaders/forward.frag", ShaderType::FRAG);
-
-            ShaderProgram shaderProgram;
-            shaderProgram.attachShader(vertexShader);
-            shaderProgram.attachShader(fragShader);
-
-            shaderProgram.link();
-
-            shaderProgram.use();
-
-            shaderProgram.setInt("texture1", 0);
-            shaderProgram.setInt("texture2", 1);
-
-            Texture texture;
-            texture.bind(0);
-            texture.setData("res/Textures/img.png");
-
-            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-
-            glfwSwapInterval(1);
 
             double startTime = glfwGetTime();
             int frames = 0;
@@ -111,33 +178,78 @@ namespace EcoSort {
 
             // While the window is open, i.e. the operating system has not requested for it to be closed.
             while (window.isOpen()) {
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                //cameraTransform->rotation.x = (glm::degrees(glm::cos((f * 2 * glm::pi<float>()) / 1000)) / 4);
-                //cameraTransform->rotation.y = (glm::degrees(glm::sin((f * 2 * glm::pi<float>()) / 1000)) / 4);
 
                 objectTransform->position.x = glm::sin((f * 2 * glm::pi<float>()) / 1000) * 2.0f;
                 objectTransform->position.z = glm::cos((f * 2 * glm::pi<float>()) / 1000) * 2.0f;
 
                 f++;
 
+                int framebufferWidth, framebufferHeight;
+                window.getFramebufferSize(&framebufferWidth, &framebufferHeight);
+
+                glViewport(0, 0, framebufferWidth, framebufferHeight);
+                Framebuffer::unbind();
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                // GEOMETRY PASS
+
+                gFramebuffer.bind();
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                gBufferShaderProgram.use();
+
+                GLenum drawBuffers[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+                glDrawBuffers(3, drawBuffers);
+
                 auto projection = glm::perspective(
                     glm::radians(cameracomp->fov),
-                    1.0f, 0.1f, 100.0f
+                    static_cast<float>(framebufferWidth) / framebufferHeight, 0.1f, 100.0f
                     );
-
                 auto view = cameraTransform->getTransformation();
                 
-                shaderProgram.setMat4("u_projection", glm::value_ptr(projection));
-                shaderProgram.setMat4("u_view", glm::value_ptr(view));
+                gBufferShaderProgram.setMat4("u_projection", glm::value_ptr(projection));
+                gBufferShaderProgram.setMat4("u_view", glm::value_ptr(view));
 
                 for (auto& [mesh, transform]: m_scene.findAll<Mesh, TransformComponent>()) {
 
                     auto model = transform->getTransformation();
-                    shaderProgram.setMat4("u_model", glm::value_ptr(model));
+                    gBufferShaderProgram.setMat4("u_model", glm::value_ptr(model));
+
+                    auto normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
+                    gBufferShaderProgram.setMat3("u_normalMatrix", glm::value_ptr(normalMatrix));
+
+                    texture.bind(0);
                     
                     mesh->draw();
                 }
+
+                // LIGHTING PASS
+
+                lightingShaderProgram.use();
+                lightingFramebuffer.bind();
+
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                gPositions.bind(0);
+                gNormals.bind(1);
+                gAlbedos.bind(2);
+
+                float lightPosition[] = { 0.0f, 0.0f, 0.0f };
+
+                lightingShaderProgram.setFloats("u_lightPosition", lightPosition, 3);
+                
+                screenMesh->draw();
+
+                // FINAL PASS
+                
+                Framebuffer::unbind();
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                finalShaderProgram.use();
+
+                lightingTexture.bind(0);
+
+                screenMesh->draw();
 
                 // Poll events in GLFW, which will handle OS events and user interfaces, such as the keyboard and mouse.
                 glfwPollEvents();

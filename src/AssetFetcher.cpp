@@ -47,12 +47,12 @@ namespace EcoSort {
         
         if (!result) {
             LOGGER.warn("Failed to load mesh from path: {}", path);
-            LOGGER.weakAssert(!reader.Warning().empty(), "Warning reading mesh: {}", reader.Warning());
-            LOGGER.weakAssert(!reader.Error().empty(), "Failed to load mesh {}", reader.Error());
+            LOGGER.weakAssert(reader.Warning().empty(), "Warning reading mesh: {}", reader.Warning());
+            LOGGER.weakAssert(reader.Error().empty(), "Failed to load mesh {}", reader.Error());
             return mesh;
         }
 
-        LOGGER.weakAssert(!reader.Warning().empty(), "Warning reading mesh: {}", reader.Warning().empty());
+        LOGGER.weakAssert(reader.Warning().empty(), "Warning reading mesh: {}", reader.Warning().c_str());
 
         // Attribs describe the data, shape describes the mesh structure.
         const tinyobj::attrib_t& attribs = reader.GetAttrib();
@@ -86,9 +86,11 @@ namespace EcoSort {
             vertices.push_back(attribs.vertices[3 * index.vertex_index + 2]);
 
             // Append the normal to the buffer
-            normals.push_back(attribs.normals[3 * index.normal_index + 0]);
-            normals.push_back(attribs.normals[3 * index.normal_index + 1]);
-            normals.push_back(attribs.normals[3 * index.normal_index + 2]);
+            if (index.normal_index >= 0) {
+                normals.push_back(attribs.normals[3 * index.normal_index + 0]);
+                normals.push_back(attribs.normals[3 * index.normal_index + 1]);
+                normals.push_back(attribs.normals[3 * index.normal_index + 2]);
+            }
 
             // Append the UV coordinates to the buffer, or 0.0f if no UVs are present.
             if (index.texcoord_index >= 0) {

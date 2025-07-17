@@ -34,7 +34,7 @@ namespace EcoSort {
         glGetShaderiv(m_handle, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(m_handle, 512, nullptr, infoLog);
-            LOGGER.error("Vertex shader compilation failed: {}", infoLog);
+            LOGGER.error("{} shader compilation failed: {}", type == ShaderType::VERT ? "Vertex" : "Fragment", infoLog);
         }
         
     }

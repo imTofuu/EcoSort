@@ -41,10 +41,9 @@ namespace EcoSort {
     Window::~Window() {
         glfwDestroyWindow(m_window);
     }
-
+    
     void Window::update() {
         glfwSwapBuffers(m_window);
     }
-
     
 }

@@ -17,6 +17,7 @@ namespace EcoSort {
     }
 
     void IndexBuffer::setData(const unsigned int* indices, unsigned int count) {
+        bind();
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(unsigned int), indices, GL_STATIC_DRAW);
         m_count = count;
     }

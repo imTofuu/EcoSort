@@ -1,7 +1,5 @@
 #pragma once
 
-#include <glad/gl.h>
-
 #include "VertexBuffer.h"
 
 namespace EcoSort {
@@ -11,19 +9,34 @@ namespace EcoSort {
         DEPTH
     };
 
+    struct TextureDescriptor {
+        TextureType type;
+        DataType dataType;
+        bool normalised;
+    };
+    
     class Texture {
     public:
 
         Texture();
         ~Texture();
 
-        void bind(int slot);
+        void bind();
+        static void setUnit(int unit);
 
         void setData(const char* path);
-        void setData(unsigned char* data, int width, int height)
-            { setData(data, width, height, DataType::UNSIGNED_BYTE); }
-        void setData(unsigned char* data, int width, int height, DataType dataType);
-        void setData(unsigned char* data, int width, int height, TextureType textureType);
+        
+        void setData(const char* data, int width, int height, bool normalised);
+        void setData(const unsigned char* data, int width, int height, bool normalised);
+        void setData(const short* data, int width, int height, bool normalised);
+        void setData(const unsigned short* data, int width, int height, bool normalised);
+        void setData(const int* data, int width, int height, bool normalised);
+        void setData(const unsigned int* data, int width, int height, bool normalised);
+        void setData(const float* data, int width, int height, bool normalised);
+        void setData(const double* data, int width, int height, bool normalised);
+        
+        void setData(int width, int height, TextureDescriptor descriptor) { setData(nullptr, width, height, descriptor); }
+        void setData(const void* data, int width, int height, TextureDescriptor descriptor);
 
     private:
 

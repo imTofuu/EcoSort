@@ -14,6 +14,7 @@ namespace EcoSort {
 
         [[nodiscard]] Logger& getLogger() { return m_logger; }
         [[nodiscard]] static Game* getInstance() { return s_instance; }
+        [[nodiscard]] Scene& getScene() { return m_scene; }
 
         static void setInstance(Game* instance) { s_instance = instance; }
     

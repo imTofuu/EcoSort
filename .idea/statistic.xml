@@ -7,6 +7,10 @@
         <option value="$PROJECT_DIR$/cmake-build-debug" />
         <option value="$PROJECT_DIR$/cmake-build-release" />
         <option value="$PROJECT_DIR$/lib" />
+        <option value="$PROJECT_DIR$/web/api/generated" />
+        <option value="$PROJECT_DIR$/web/api/node_modules" />
+        <option value="$PROJECT_DIR$/web/api/pg" />
+        <option value="$PROJECT_DIR$/web/api/prisma/migrations" />
       </list>
     </option>
   </component>

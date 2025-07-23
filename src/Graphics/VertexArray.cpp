@@ -16,6 +16,7 @@ namespace EcoSort {
 
     // Set an attribute of tightly packed, self normalised data for the vertex array at index and enable it
     void VertexArray::setBuffer(unsigned int index, VertexBuffer& vbo, DataType type, DataElements elements) {
+        bind();
         vbo.bind();
         glVertexAttribPointer(index,
             static_cast<GLint>(elements),

@@ -15,6 +15,7 @@ namespace EcoSort {
     }
 
     void VertexBuffer::setData(const void* data, unsigned int size, DataUsage usage) {
+        bind();
         glBufferData(GL_ARRAY_BUFFER, size, data, static_cast<GLenum>(usage));
     }
     

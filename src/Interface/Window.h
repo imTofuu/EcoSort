@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #include "Interface.h"
+#include "Renderer.h"
 
 namespace EcoSort {
 
@@ -22,11 +23,13 @@ namespace EcoSort {
         [[nodiscard]] bool isOpen() const { return !glfwWindowShouldClose(m_window); }
         
         [[nodiscard]] Interface& getInterface() { return m_interface; }
+        [[nodiscard]] Renderer* getRenderer() { return m_renderer; }
 
     private:
 
         GLFWwindow* m_window;
 
+        Renderer* m_renderer;
         Interface m_interface;
         
     };

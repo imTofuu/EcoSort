@@ -17,16 +17,13 @@ namespace EcoSort {
     }
 
     void Mesh::setVertices(const float* data, unsigned int vertices) {
-        m_vao->bind();
         auto vbo = std::make_shared<VertexBuffer>();
-        vbo->bind();
         vbo->setData(data, vertices * sizeof(float) * 3);
         setVertices(vbo);
     }
 
     void Mesh::setIndices(const unsigned int* indices, unsigned int count) {
         auto ibo = std::make_shared<IndexBuffer>();
-        ibo->bind();
         ibo->setData(indices, count);
         setIndices(ibo);
     }
@@ -46,15 +43,25 @@ namespace EcoSort {
 
     void Mesh::setBuffer(unsigned int index, const void* data, unsigned int size, DataType type, DataElements elements) {
         std::shared_ptr<VertexBuffer> vbo = std::make_shared<VertexBuffer>();
-        vbo->bind();
         vbo->setData(data, size, DataUsage::STATIC_DRAW);
         setBuffer(index, vbo, type, elements);
+    }
+
+    void Mesh::setPrimaryTexture(const char* path) {
+        auto texture = std::make_shared<Texture>();
+        texture->setData(path);
+        setPrimaryTexture(texture);
     }
 
     void Mesh::draw() {
         if (!m_ibo) {
             LOGGER.warn("Mesh has no indices");
             return;
+        }
+
+        if (m_primaryTexture) {
+            Texture::setUnit(0);
+            m_primaryTexture->bind();
         }
 
         m_vao->bind();

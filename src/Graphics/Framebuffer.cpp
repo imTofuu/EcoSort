@@ -2,8 +2,6 @@
 
 #include <glad/gl.h>
 
-#include "Game.h"
-
 namespace EcoSort {
 
     Framebuffer::Framebuffer() : m_handle(0){
@@ -23,6 +21,7 @@ namespace EcoSort {
     }
 
     void Framebuffer::addColorAttachment(const Texture& texture, int index) {
+        bind();
         glFramebufferTexture2D(GL_FRAMEBUFFER,
             GL_COLOR_ATTACHMENT0 + index,
             GL_TEXTURE_2D,
@@ -32,6 +31,7 @@ namespace EcoSort {
     }
 
     void Framebuffer::addDepthAttachment(const Texture& texture) {
+        bind();
         glFramebufferTexture2D(GL_FRAMEBUFFER,
             GL_DEPTH_ATTACHMENT,
             GL_TEXTURE_2D,

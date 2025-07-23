@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Texture.h"
 
 namespace EcoSort {
@@ -18,6 +19,8 @@ namespace EcoSort {
     private:
 
         unsigned int m_handle;
+
+        friend class Renderer;
         
     };
     

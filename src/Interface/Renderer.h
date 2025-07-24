@@ -30,9 +30,13 @@ namespace EcoSort {
 
         ShaderProgram m_geometryProgram,
                       m_lightingProgram,
-                      m_finalProgram;
+                      m_finalProgram,
+
+                      m_debugLightProgram;
         
-        Mesh m_screenMesh;
+        Mesh m_screenMesh,
+        
+             m_debugLightMesh;
         
     };
     

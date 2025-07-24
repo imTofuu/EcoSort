@@ -13,8 +13,8 @@ namespace EcoSort {
         void bind();
         static void unbind();
 
-        void addColorAttachment(const Texture& texture, int index);
-        void addDepthAttachment(const Texture& texture);
+        void addColorAttachment(Texture& texture, int index);
+        void addDepthAttachment(Texture& texture);
 
     private:
 

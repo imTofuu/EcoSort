@@ -93,6 +93,7 @@ target_compile_definitions(EcoSort PRIVATE
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
         target_compile_definitions(EcoSort PUBLIC
                 RG_DEBUG
+                RG_DEBUG_SHOW_LIGHTS
         )
 endif()
 

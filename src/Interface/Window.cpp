@@ -33,11 +33,28 @@ namespace EcoSort {
         
         windowPtr->getRenderer()->resize(w, h);
     }
+
+    Window::Window(const char* name) {
+        const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+ 
+        glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+        glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+        glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+        glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+        
+        m_window = glfwCreateWindow(mode->width, mode->height, name, glfwGetPrimaryMonitor(), nullptr);
+
+        init();
+    }
     
     Window::Window(const char* name, int width, int height) {
 
         m_window = glfwCreateWindow(width, height, name, nullptr, nullptr);
 
+        init();
+    }
+
+    void Window::init() {
         // Sets the OpenGL context in the window that was just created as current on this thread. This means that any
         // OpenGL calls on this thread will affect that context.
         glfwMakeContextCurrent(m_window);

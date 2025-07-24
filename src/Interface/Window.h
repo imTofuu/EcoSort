@@ -9,7 +9,8 @@ namespace EcoSort {
 
     class Window {
     public:
-        
+
+        Window(const char* name);
         Window(const char* name, int width, int height);
         ~Window();
 
@@ -26,6 +27,8 @@ namespace EcoSort {
         [[nodiscard]] Renderer* getRenderer() { return m_renderer; }
 
     private:
+
+        void init();
 
         GLFWwindow* m_window;
 

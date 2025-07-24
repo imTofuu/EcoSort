@@ -13,7 +13,7 @@
 namespace EcoSort {
     Game *Game::s_instance = nullptr;
 
-    void glfwErrorCallback(int error, const char *description) {
+    void glfwErrorCallback(int error, const char* description) {
         static Logger logger("GLFW");
         logger.error("Error {}: {}", error, description);
     }
@@ -40,18 +40,12 @@ namespace EcoSort {
 
         // Create a new scope so the window will be destroyed once the main loop has finished.
         {
-            Window window("EcoSort", 500, 500);
+#ifdef RG_DEBUG
+            Window window("EcoSort", 750, 750);
+#else
+            Window window("EcoSort");
+#endif
             m_logger.info("Initialised window");
-
-            // Load the OpenGL symbols using glad. This is required, otherwise all the OpenGL function pointers will be
-            // null. The symbols are loaded here because glfwGetProcAddress requires a context to be current on the
-            // main thread, which is done in the Window initialisation.
-            /*result = gladLoadGL(glfwGetProcAddress);
-            m_logger.assert(result, "Failed to initialize GLAD");
-            m_logger.debug("OpenGL Version: {}", reinterpret_cast<const char *>(glGetString(GL_VERSION)));*/
-
-            int vpWidth, vpHeight;
-            window.getFramebufferSize(&vpWidth, &vpHeight);
 
             Object camera = m_scene.createObject();
             auto cameracomp = camera.addComponent<CameraComponent>();
@@ -61,12 +55,24 @@ namespace EcoSort {
 
             Object object = m_scene.createObject();
             auto objectTransform = object.addComponent<TransformComponent>();
-            objectTransform->scale.x = 1;
+            objectTransform->scale = glm::vec3(1.0f);
 
             // My library is bad, dumb workaround
             auto mesh = object.addComponent<Mesh>();
             object.setComponent(*AssetFetcher::meshFromPath("res/Models/Suzanne.obj"));
             mesh->setPrimaryTexture("res/Textures/img.png");
+
+            Object redLight = m_scene.createObject();
+            auto redLightTransform = redLight.addComponent<TransformComponent>();
+            auto redLightComp = redLight.addComponent<LightComponent>();
+            redLightTransform->position = glm::vec3(-2.0f, 0.0f, 0.0f);
+            redLightComp->colour = glm::vec3(1.0f, 0.0f, 0.0f);
+
+            Object blueLight = m_scene.createObject();
+            auto blueLightTransform = blueLight.addComponent<TransformComponent>();
+            auto blueLightComp = blueLight.addComponent<LightComponent>();
+            blueLightTransform->position = glm::vec3(2.0f, 0.0f, 0.0f);
+            blueLightComp->colour = glm::vec3(0.0f, 1.0f, 0.0f);
 
             double startTime = glfwGetTime();
             int frames = 0;
@@ -78,6 +84,11 @@ namespace EcoSort {
 
                 objectTransform->position.x = glm::sin((f * 2 * glm::pi<float>()) / 1000) * 2.0f;
                 objectTransform->position.z = glm::cos((f * 2 * glm::pi<float>()) / 1000) * 2.0f;
+
+                objectTransform->rotation = glm::angleAxis(
+                    (f * 2 * glm::pi<float>() / 1000) * (1.0f / 2),
+                    glm::vec3(0, 1, 0)
+                );
 
                 f++;
 

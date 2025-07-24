@@ -5,7 +5,7 @@
 namespace EcoSort {
 
     void RenderTarget::addAttachment(TextureDescriptor descriptor) {
-        auto& pair = m_attachments.emplace_back(std::make_pair(std::make_shared<Texture>(), descriptor));
+        auto& pair = m_attachments.emplace_back(std::make_shared<Texture>(), descriptor);
         Texture* texture = pair.first.get();
         m_attachments.back().second = descriptor;
         texture->setData(m_width, m_height, descriptor);

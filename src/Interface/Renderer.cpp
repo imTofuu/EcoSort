@@ -36,6 +36,9 @@ namespace EcoSort {
         m_finalTarget.addAttachment({
         TextureType::COLOUR, DataType::UNSIGNED_BYTE, true
         }); // finalTexture
+        m_finalTarget.addAttachment({
+            TextureType::DEPTH, DataType::FLOAT, false
+        }); // finalDepth
 
         // These can be safely marked for deletion once linked to the shader program.
         Shader gBufferVertShader("res/Shaders/gbuffer.vert", ShaderType::VERT),
@@ -43,7 +46,10 @@ namespace EcoSort {
                lightingVertShader("res/Shaders/lighting.vert", ShaderType::VERT),
                lightingFragShader("res/Shaders/lighting.frag", ShaderType::FRAG),
                finalVertShader("res/Shaders/final.vert", ShaderType::VERT),
-               finalFragShader("res/Shaders/final.frag", ShaderType::FRAG);
+               finalFragShader("res/Shaders/final.frag", ShaderType::FRAG),
+
+               debugLightVertShader("res/Shaders/Debug/showlights.vert", ShaderType::VERT),
+               debugLightFragShader("res/Shaders/Debug/showlights.frag", ShaderType::FRAG);
 
         m_geometryProgram.attachShader(gBufferVertShader);
         m_geometryProgram.attachShader(gBufferFragShader);
@@ -54,6 +60,9 @@ namespace EcoSort {
         m_finalProgram.attachShader(finalVertShader);
         m_finalProgram.attachShader(finalFragShader);
 
+        m_debugLightProgram.attachShader(debugLightVertShader);
+        m_debugLightProgram.attachShader(debugLightFragShader);
+
         m_geometryProgram.setInt("u_primaryTexture", 0);
 
         m_lightingProgram.setInt("u_gPositions", 0);
@@ -63,6 +72,7 @@ namespace EcoSort {
         m_finalProgram.setInt("u_screen", 0);
 
         m_screenMesh = *AssetFetcher::meshFromPath("res/Models/Fullscreen.obj");
+        m_debugLightMesh = *AssetFetcher::meshFromPath("res/Models/Cube.obj");
 
         glClearColor(0, 0, 0, 1);
 
@@ -76,9 +86,9 @@ namespace EcoSort {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
 
-        // Tell OpenGL how to blend semi-transparent or fully transparent fragments with what is behind it.
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDisable(GL_BLEND);
+        glBlendEquation(GL_FUNC_ADD);
+        glBlendFunc(GL_ONE, GL_ONE);
 
         glfwSwapInterval(1);
         
@@ -101,6 +111,8 @@ namespace EcoSort {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         m_geometryProgram.use();
+
+        glEnable(GL_DEPTH_TEST);
 
         CameraComponent* camera = nullptr;
         TransformComponent* cameraTransform = nullptr;
@@ -135,6 +147,8 @@ namespace EcoSort {
             mesh->draw();
         }
 
+        glDisable(GL_DEPTH_TEST);
+
         // LIGHTING PASS
 
         m_lightingTarget.bind();
@@ -143,16 +157,25 @@ namespace EcoSort {
         m_lightingProgram.use();
 
         m_geometryTarget.use();
+        
+        glEnable(GL_BLEND);
 
-        float lightPosition[] = { 0.0f, 0.0f, 0.0f }; // Placeholder for light position
+        for (auto& [ light, transform ] : scene.findAll<LightComponent, TransformComponent>()) {
 
-        m_lightingProgram.setFloats("u_lightPosition", lightPosition, 3);
+            m_lightingProgram.setInt("u_light.lightType", static_cast<int>(light->type));
+            m_lightingProgram.setFloats("u_light.position", glm::value_ptr(transform->position), 3);
+            m_lightingProgram.setFloats("u_light.direction", glm::value_ptr(transform->rotation), 4);
+            m_lightingProgram.setFloats("u_light.colour", glm::value_ptr(light->colour), 3);
+            
+            m_screenMesh.draw();
+            
+        }
 
-        m_screenMesh.draw();
+        glDisable(GL_BLEND);
 
         // FINAL PASS
-
-        Framebuffer::unbind();
+        
+        m_finalTarget.bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         m_finalProgram.use();
@@ -161,6 +184,46 @@ namespace EcoSort {
 
         m_screenMesh.draw();
 
+#ifdef RG_DEBUG_SHOW_LIGHTS
+
+        // DEBUG LIGHTS
+
+        glEnable(GL_DEPTH_TEST);
+
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, m_geometryTarget.m_framebuffer.m_handle);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_finalTarget.m_framebuffer.m_handle);
+
+        glBlitFramebuffer(
+            0, 0, m_width, m_height,
+            0, 0, m_width, m_height,
+            GL_DEPTH_BUFFER_BIT,
+            GL_NEAREST
+            );
+
+        m_finalTarget.bind();
+
+        m_debugLightProgram.use();
+
+        m_debugLightProgram.setMat4("u_projection", glm::value_ptr(projection));
+        m_debugLightProgram.setMat4("u_view", glm::value_ptr(view));
+
+        for (auto& [ light, transform ] : scene.findAll<LightComponent, TransformComponent>()) {
+
+            transform->scale = glm::vec3(0.1f);
+
+            auto model = transform->getTransformation();
+            m_debugLightProgram.setMat4("u_model", glm::value_ptr(model));
+
+            m_debugLightProgram.setFloats("u_lightColour", glm::value_ptr(light->colour), 3);
+
+            m_debugLightMesh.draw();
+            
+        }
+
+        glDisable(GL_DEPTH_TEST);
+        
+#endif
+        
         blit(m_finalTarget, renderTarget);
         
     }
@@ -179,7 +242,7 @@ namespace EcoSort {
         glBlitFramebuffer(
             0, 0, m_width, m_height,
             0, 0, dst ? dst->m_width : m_width, dst ? dst->m_height : m_height,
-            GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
+            GL_COLOR_BUFFER_BIT,
             GL_LINEAR
         );
     }

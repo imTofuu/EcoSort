@@ -26,10 +26,12 @@ namespace EcoSort {
 
         RenderTarget m_geometryTarget,
                      m_lightingTarget,
+                     m_guiTarget,
                      m_finalTarget;
 
         ShaderProgram m_geometryProgram,
                       m_lightingProgram,
+                      m_guiProgram,
                       m_finalProgram,
 
                       m_debugLightProgram;
@@ -37,6 +39,8 @@ namespace EcoSort {
         Mesh m_screenMesh,
         
              m_debugLightMesh;
+
+        Texture m_whiteTexture;
         
     };
     

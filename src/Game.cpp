@@ -74,6 +74,20 @@ namespace EcoSort {
             blueLightTransform->position = glm::vec3(2.0f, 0.0f, 0.0f);
             blueLightComp->colour = glm::vec3(0.0f, 1.0f, 0.0f);
 
+            Object guiFrame = m_scene.createObject();
+            auto guiFrameTransform = guiFrame.addComponent<Transform2DComponent>();
+            auto guiFrameComp = guiFrame.addComponent<GUIComponent>();
+            guiFrameTransform->position = {
+                glm::vec2(0),
+                glm::vec2(0)
+            };
+            guiFrameTransform->size = {
+                glm::vec2(0),
+                glm::vec2(0.5, 0.5f)
+            };
+            guiFrameComp->image = std::make_shared<Texture>();
+            guiFrameComp->image->setData("res/Textures/img.png");
+
             double startTime = glfwGetTime();
             int frames = 0;
 

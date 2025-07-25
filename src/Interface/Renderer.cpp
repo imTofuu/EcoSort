@@ -14,7 +14,8 @@ namespace EcoSort {
 
     Renderer::Renderer(int width, int height)
         : m_width(width), m_height(height), m_geometryTarget(width, height),
-          m_lightingTarget(width, height), m_finalTarget(width, height) {
+          m_lightingTarget(width, height), m_guiTarget(width, height),
+          m_finalTarget(width, height) {
 
         m_geometryTarget.addAttachment({
             TextureType::COLOUR, DataType::FLOAT, false
@@ -33,6 +34,13 @@ namespace EcoSort {
             TextureType::COLOUR, DataType::UNSIGNED_BYTE, true
         }); // lightingTexture
 
+        m_guiTarget.addAttachment({
+        TextureType::COLOUR, DataType::UNSIGNED_BYTE, true
+        }); // guiTexture
+        m_guiTarget.addAttachment({
+            TextureType::DEPTH, DataType::FLOAT, false
+        }); // guiDepth
+
         m_finalTarget.addAttachment({
         TextureType::COLOUR, DataType::UNSIGNED_BYTE, true
         }); // finalTexture
@@ -41,12 +49,17 @@ namespace EcoSort {
         }); // finalDepth
 
         // These can be safely marked for deletion once linked to the shader program.
-        Shader gBufferVertShader("res/Shaders/gbuffer.vert", ShaderType::VERT),
-               gBufferFragShader("res/Shaders/gbuffer.frag", ShaderType::FRAG),
-               lightingVertShader("res/Shaders/lighting.vert", ShaderType::VERT),
-               lightingFragShader("res/Shaders/lighting.frag", ShaderType::FRAG),
-               finalVertShader("res/Shaders/final.vert", ShaderType::VERT),
-               finalFragShader("res/Shaders/final.frag", ShaderType::FRAG),
+        Shader gBufferVertShader("res/Shaders/Scene/Deferred/gbuffer.vert", ShaderType::VERT),
+               gBufferFragShader("res/Shaders/Scene/Deferred/gbuffer.frag", ShaderType::FRAG),
+        
+               lightingVertShader("res/Shaders/Scene/Deferred/lighting.vert", ShaderType::VERT),
+               lightingFragShader("res/Shaders/Scene/Deferred/lighting.frag", ShaderType::FRAG),
+
+               guiVertShader("res/Shaders/GUI/gui.vert", ShaderType::VERT),
+               guiFragShader("res/Shaders/GUI/gui.frag", ShaderType::FRAG),
+        
+               finalVertShader("res/Shaders/Scene/Deferred/final.vert", ShaderType::VERT),
+               finalFragShader("res/Shaders/Scene/Deferred/final.frag", ShaderType::FRAG),
 
                debugLightVertShader("res/Shaders/Debug/showlights.vert", ShaderType::VERT),
                debugLightFragShader("res/Shaders/Debug/showlights.frag", ShaderType::FRAG);
@@ -56,6 +69,9 @@ namespace EcoSort {
 
         m_lightingProgram.attachShader(lightingVertShader);
         m_lightingProgram.attachShader(lightingFragShader);
+
+        m_guiProgram.attachShader(guiVertShader);
+        m_guiProgram.attachShader(guiFragShader);
 
         m_finalProgram.attachShader(finalVertShader);
         m_finalProgram.attachShader(finalFragShader);
@@ -69,26 +85,27 @@ namespace EcoSort {
         m_lightingProgram.setInt("u_gNormals", 1);
         m_lightingProgram.setInt("u_gAlbedos", 2);
 
+        m_guiProgram.setInt("u_image", 0);
+
         m_finalProgram.setInt("u_screen", 0);
 
         m_screenMesh = *AssetFetcher::meshFromPath("res/Models/Fullscreen.obj");
         m_debugLightMesh = *AssetFetcher::meshFromPath("res/Models/Cube.obj");
 
+        m_whiteTexture.setData("res/Textures/white.png");
+
         glClearColor(0, 0, 0, 1);
 
-        // Tell OpenGL to only call the fragment shader for front faces, decided by the winding of their vertices
+        // Tell OpenGL to only call the fragment shader for front faces, decided
+        // by the winding of their vertices
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         glFrontFace(GL_CCW);
 
-        // Enable depth testing so that the fragment shader not called for fragments that are behind other
-        // fragments.
+        // Enable depth testing so that the fragment shader is not called for
+        // fragments that are behind other fragments.
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-
-        glDisable(GL_BLEND);
-        glBlendEquation(GL_FUNC_ADD);
-        glBlendFunc(GL_ONE, GL_ONE);
 
         glfwSwapInterval(1);
         
@@ -107,12 +124,12 @@ namespace EcoSort {
 
         // GEOMETRY PASS
 
+        glEnable(GL_DEPTH_TEST);
+
         m_geometryTarget.bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         m_geometryProgram.use();
-
-        glEnable(GL_DEPTH_TEST);
 
         CameraComponent* camera = nullptr;
         TransformComponent* cameraTransform = nullptr;
@@ -151,14 +168,16 @@ namespace EcoSort {
 
         // LIGHTING PASS
 
+        glEnable(GL_BLEND);
+        glBlendEquation(GL_FUNC_ADD);
+        glBlendFunc(GL_ONE, GL_ONE);
+
         m_lightingTarget.bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         m_lightingProgram.use();
 
         m_geometryTarget.use();
-        
-        glEnable(GL_BLEND);
 
         for (auto& [ light, transform ] : scene.findAll<LightComponent, TransformComponent>()) {
 
@@ -173,7 +192,72 @@ namespace EcoSort {
 
         glDisable(GL_BLEND);
 
+        // GUI PASS
+
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glDisable(GL_CULL_FACE);
+        glBlendEquation(GL_FUNC_ADD);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glClearColor(0, 0, 0, 0);
+
+        m_guiTarget.bind();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        m_guiProgram.use();
+
+        auto guiProjection = glm::ortho(
+            0.0f, static_cast<float>(m_width),
+            static_cast<float>(m_height), 0.0f,
+            0.0f, 100.0f
+            );
+
+        m_guiProgram.setMat4("u_projection", glm::value_ptr(guiProjection));
+
+        for (auto& [ gui, transform ] : scene.findAll<GUIComponent, Transform2DComponent>()) {
+
+            TransformComponent scaledTransform;
+
+            scaledTransform.position = glm::vec3(
+                transform->position.offset.x + (transform->position.scale.x * m_width),
+                transform->position.offset.y + (transform->position.scale.y * m_height),
+                transform->zIndex
+            );
+            scaledTransform.scale = glm::vec3(
+                transform->size.offset.x + (transform->size.scale.x * m_width),
+                transform->size.offset.y + (transform->size.scale.y * m_height),
+                1.0f
+            );
+
+            auto model = scaledTransform.getTransformation();
+            m_guiProgram.setMat4("u_model", glm::value_ptr(model));
+
+            if (gui->image) {
+                Texture::setUnit(0);
+                gui->image->bind();
+            } else {
+                Texture::setUnit(0);
+                m_whiteTexture.bind();
+            }
+
+            m_guiProgram.setFloats("u_colour", glm::value_ptr(gui->colour), 4);
+
+            // Since screenMesh is a generic quad, it can be used for this too.
+            m_screenMesh.draw();
+        }
+
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+        glEnable(GL_CULL_FACE);
+
+        glClearColor(0, 0, 0, 1);
+
         // FINAL PASS
+
+        glEnable(GL_BLEND);
+        glBlendEquation(GL_FUNC_ADD);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
         m_finalTarget.bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -181,12 +265,11 @@ namespace EcoSort {
         m_finalProgram.use();
 
         m_lightingTarget.use();
-
         m_screenMesh.draw();
 
 #ifdef RG_DEBUG_SHOW_LIGHTS
 
-        // DEBUG LIGHTS
+        // DEBUG LIGHTS SUBPASS
 
         glEnable(GL_DEPTH_TEST);
 
@@ -199,7 +282,7 @@ namespace EcoSort {
             GL_DEPTH_BUFFER_BIT,
             GL_NEAREST
             );
-
+        
         m_finalTarget.bind();
 
         m_debugLightProgram.use();
@@ -223,6 +306,13 @@ namespace EcoSort {
         glDisable(GL_DEPTH_TEST);
         
 #endif
+
+        m_finalProgram.use();
+
+        m_guiTarget.use();
+        m_screenMesh.draw();
+
+        glDisable(GL_BLEND);
         
         blit(m_finalTarget, renderTarget);
         

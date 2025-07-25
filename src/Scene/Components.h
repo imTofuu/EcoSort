@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Graphics/Texture.h"
+
 #include "glm/detail/type_quat.hpp"
 #include "glm/fwd.hpp"
 
@@ -19,6 +21,19 @@ namespace EcoSort {
         
     };
 
+    struct Transform2DComponent {
+
+        struct {
+            glm::vec2 offset = glm::vec2(100.0f);
+            glm::vec2 scale = glm::vec2(0.0f);
+        } position;
+        struct {
+            glm::vec2 offset = glm::vec2(100.0f);
+            glm::vec2 scale = glm::vec2(0.0f);
+        } size;
+        float zIndex = 0.0f;
+    };
+
     struct CameraComponent {
 
         float fov = 45.0f;
@@ -36,6 +51,13 @@ namespace EcoSort {
         glm::vec3 colour = glm::vec3(1.0f);
         LightType type = LightType::POINT;
         
+    };
+
+    struct GUIComponent {
+
+        glm::vec4 colour = glm::vec4(1.0f);
+        std::shared_ptr<Texture> image = nullptr;
+
     };
     
 }

@@ -66,7 +66,7 @@ namespace EcoSort {
 
         m_vao->bind();
         m_ibo->bind();
-
+        
         glDrawElements(GL_TRIANGLES, static_cast<GLint>(m_indexCount), GL_UNSIGNED_INT, nullptr);
     }
     

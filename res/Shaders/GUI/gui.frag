@@ -1,12 +1,3 @@
-#version 410 core
-
-in vec2 f_uv;
-
-uniform sampler2D u_image;
-uniform vec4 u_colour;
-
-out vec4 fragColour;
-
-void main() {
-    fragColour = texture(u_image, f_uv) * u_colour;
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:bad93ac4e5a98d007132aa83505e0d57e12d446738801a288860c6b620cc703b
+size 174

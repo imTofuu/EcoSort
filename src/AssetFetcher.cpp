@@ -33,14 +33,15 @@ struct std::hash<EcoSort::Vertex> {
 };
 
 namespace EcoSort {
+
     std::shared_ptr<Mesh> AssetFetcher::meshFromPath(const char* path) {
 
         LOGGER.debug("Reading mesh from path: {}", path);
 
         std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>();
 
-        static tinyobj::ObjReader reader;
-        static tinyobj::ObjReaderConfig config;
+        tinyobj::ObjReader reader;
+        tinyobj::ObjReaderConfig config;
         config.triangulate = true; // Convert non-triangular faces to triangles
         
         bool result = reader.ParseFromFile(path, config);
@@ -90,6 +91,10 @@ namespace EcoSort {
                 normals.push_back(attribs.normals[3 * index.normal_index + 0]);
                 normals.push_back(attribs.normals[3 * index.normal_index + 1]);
                 normals.push_back(attribs.normals[3 * index.normal_index + 2]);
+            } else {
+                normals.push_back(0.0f);
+                normals.push_back(0.0f);
+                normals.push_back(0.0f);
             }
 
             // Append the UV coordinates to the buffer, or 0.0f if no UVs are present.

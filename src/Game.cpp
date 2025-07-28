@@ -55,12 +55,21 @@ namespace EcoSort {
 
             Object object = m_scene.createObject();
             auto objectTransform = object.addComponent<TransformComponent>();
-            objectTransform->scale = glm::vec3(1.0f);
+            objectTransform->scale = glm::vec3(0.02f);
 
             // My library is bad, dumb workaround
             auto mesh = object.addComponent<Mesh>();
-            object.setComponent(*AssetFetcher::meshFromPath("res/Models/Suzanne.obj"));
-            mesh->setPrimaryTexture("res/Textures/img.png");
+            object.setComponent(*AssetFetcher::meshFromPath("res/Models/StanfordDragon.obj"));
+            mesh->setPrimaryTexture("res/Textures/white.png");
+
+            /*Object testCube = m_scene.createObject();
+            auto testCubeTransform = testCube.addComponent<TransformComponent>();
+            testCubeTransform->position = glm::vec3(0.0f);
+            testCubeTransform->rotation = glm::angleAxis(glm::pi<float>() / 4, glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
+
+            auto cubemesh = testCube.addComponent<Mesh>();
+            testCube.setComponent(*AssetFetcher::meshFromPath("res/Models/Cube.obj"));
+            cubemesh->setPrimaryTexture("res/Textures/white.png");*/
 
             Object redLight = m_scene.createObject();
             auto redLightTransform = redLight.addComponent<TransformComponent>();
@@ -68,11 +77,18 @@ namespace EcoSort {
             redLightTransform->position = glm::vec3(-2.0f, 0.0f, 0.0f);
             redLightComp->colour = glm::vec3(1.0f, 0.0f, 0.0f);
 
-            Object blueLight = m_scene.createObject();
-            auto blueLightTransform = blueLight.addComponent<TransformComponent>();
-            auto blueLightComp = blueLight.addComponent<LightComponent>();
+            Object greenLight = m_scene.createObject();
+            auto blueLightTransform = greenLight.addComponent<TransformComponent>();
+            auto blueLightComp = greenLight.addComponent<LightComponent>();
             blueLightTransform->position = glm::vec3(2.0f, 0.0f, 0.0f);
             blueLightComp->colour = glm::vec3(0.0f, 1.0f, 0.0f);
+
+            Object dirLight = m_scene.createObject();
+            auto dirLightTransform = dirLight.addComponent<TransformComponent>();
+            auto dirLightComp = dirLight.addComponent<LightComponent>();
+            dirLightTransform->rotation = glm::angleAxis((glm::pi<float>()) / 4, glm::vec3(0.0f, 0.0f, 1.0f));
+            dirLightComp->colour = glm::vec3(1.0f, 0.0f, 1.0f);
+            dirLightComp->type = LightComponent::LightType::DIRECTIONAL;
 
             Object guiFrame = m_scene.createObject();
             auto guiFrameTransform = guiFrame.addComponent<Transform2DComponent>();
@@ -100,7 +116,7 @@ namespace EcoSort {
                 objectTransform->position.z = glm::cos((f * 2 * glm::pi<float>()) / 1000) * 2.0f;
 
                 objectTransform->rotation = glm::angleAxis(
-                    (f * 2 * glm::pi<float>() / 1000) * (1.0f / 2),
+                    (f * 2 * glm::pi<float>() / 500),
                     glm::vec3(0, 1, 0)
                 );
 

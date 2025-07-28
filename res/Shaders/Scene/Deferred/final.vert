@@ -1,11 +1,3 @@
-#version 410 core
-
-layout (location = 0) in vec3 a_position;
-
-out vec2 f_uv;
-
-void main() {
-    gl_Position = vec4(a_position, 1.0);
-
-    f_uv = (a_position.xy * 0.5) + 0.5;
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:81ab0f8a9018f04cfbe70a78055d067b8d770ad25d47cfe7660b0535594117d1
+size 175

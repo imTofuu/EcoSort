@@ -1,11 +1,3 @@
-#version 410 core
-
-layout(location = 0) in vec3 a_position;
-
-uniform mat4 u_projection;
-uniform mat4 u_view;
-uniform mat4 u_model;
-
-void main() {
-    gl_Position = u_projection * u_view * u_model * vec4(a_position, 1.0);
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:8585c709c6652b5e6577b95329855a29a3d29c74008031b977ca6ae421ff9f29
+size 222

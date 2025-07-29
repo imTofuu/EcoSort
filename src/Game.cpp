@@ -62,6 +62,15 @@ namespace EcoSort {
             object.setComponent(*AssetFetcher::meshFromPath("res/Models/StanfordDragon.obj"));
             mesh->setPrimaryTexture("res/Textures/white.png");
 
+            Object sponzaObject = m_scene.createObject();
+            auto sponzaTransform = sponzaObject.addComponent<TransformComponent>();
+            sponzaTransform->scale = glm::vec3(0.05f);
+            sponzaTransform->position = glm::vec3(0.0f, -1.0f, 0.0f);
+
+            auto sponzaMesh = sponzaObject.addComponent<Mesh>();
+            sponzaObject.setComponent(*AssetFetcher::meshFromPath("res/Models/Sponza/Sponza.obj"));
+            sponzaMesh->setPrimaryTexture("res/Textures/img.png");
+            
             /*Object testCube = m_scene.createObject();
             auto testCubeTransform = testCube.addComponent<TransformComponent>();
             testCubeTransform->position = glm::vec3(0.0f);
@@ -76,21 +85,23 @@ namespace EcoSort {
             auto redLightComp = redLight.addComponent<LightComponent>();
             redLightTransform->position = glm::vec3(-2.0f, 0.0f, 0.0f);
             redLightComp->colour = glm::vec3(1.0f, 0.0f, 0.0f);
+            redLightComp->distance = 15.0f;
 
             Object greenLight = m_scene.createObject();
             auto blueLightTransform = greenLight.addComponent<TransformComponent>();
             auto blueLightComp = greenLight.addComponent<LightComponent>();
             blueLightTransform->position = glm::vec3(2.0f, 0.0f, 0.0f);
             blueLightComp->colour = glm::vec3(0.0f, 1.0f, 0.0f);
+            blueLightComp->distance = 5.0f;
 
             Object dirLight = m_scene.createObject();
             auto dirLightTransform = dirLight.addComponent<TransformComponent>();
             auto dirLightComp = dirLight.addComponent<LightComponent>();
-            dirLightTransform->rotation = glm::angleAxis((glm::pi<float>()) / 4, glm::vec3(0.0f, 0.0f, 1.0f));
+            dirLightTransform->rotation = glm::angleAxis(glm::pi<float>() / 2, glm::vec3(0.0f, 0.0f, 1.0f));
             dirLightComp->colour = glm::vec3(1.0f, 0.0f, 1.0f);
             dirLightComp->type = LightComponent::LightType::DIRECTIONAL;
 
-            Object guiFrame = m_scene.createObject();
+            /*Object guiFrame = m_scene.createObject();
             auto guiFrameTransform = guiFrame.addComponent<Transform2DComponent>();
             auto guiFrameComp = guiFrame.addComponent<GUIComponent>();
             guiFrameTransform->position = {
@@ -102,7 +113,7 @@ namespace EcoSort {
                 glm::vec2(0.5, 0.5f)
             };
             guiFrameComp->image = std::make_shared<Texture>();
-            guiFrameComp->image->setData("res/Textures/img.png");
+            guiFrameComp->image->setData("res/Textures/img.png");*/
 
             double startTime = glfwGetTime();
             int frames = 0;

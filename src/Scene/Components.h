@@ -50,6 +50,7 @@ namespace EcoSort {
         
         glm::vec3 colour = glm::vec3(1.0f);
         LightType type = LightType::POINT;
+        float distance = 5.0f;
         
     };
 

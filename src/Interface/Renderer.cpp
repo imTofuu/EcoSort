@@ -179,6 +179,10 @@ namespace EcoSort {
 
         m_geometryTarget.use();
 
+        m_lightingProgram.setInt("u_light.lightType", 4);
+
+        m_screenMesh.draw();
+
         for (auto& [ light, transform ] : scene.findAll<LightComponent, TransformComponent>()) {
 
             m_lightingProgram.setInt("u_light.lightType", static_cast<int>(light->type));
@@ -189,6 +193,7 @@ namespace EcoSort {
             
             m_lightingProgram.setFloats("u_light.direction", glm::value_ptr(dir), 3);
             m_lightingProgram.setFloats("u_light.colour", glm::value_ptr(light->colour), 3);
+            m_lightingProgram.setFloat("u_light.distance", light->distance);
             
             m_screenMesh.draw();
             
@@ -298,7 +303,7 @@ namespace EcoSort {
 
             transform->scale = glm::vec3(0.1f);
             if (light->type == LightComponent::LightType::DIRECTIONAL)
-                transform->scale.x *= 3.0f;
+                transform->scale.y *= 3.0f;
 
             auto model = transform->getTransformation();
             m_debugLightProgram.setMat4("u_model", glm::value_ptr(model));

@@ -3,6 +3,7 @@
 #include "Graphics/Mesh.h"
 #include "Graphics/RenderTarget.h"
 #include "Graphics/ShaderProgram.h"
+#include "Scene/Components.h"
 #include "Scene/Scene.h"
 
 namespace EcoSort {
@@ -18,6 +19,10 @@ namespace EcoSort {
 
         // dst can be null, will blit to the screen.
         void blit(const RenderTarget& src, RenderTarget* dst);
+
+        TransformComponent
+        getAbsoluteTransform2D(const Transform2DComponent &transform);
+        static TransformComponent getRelativeTransform2D(const Transform2DComponent& child, const TransformComponent& parent);
 
     private:
 
@@ -37,6 +42,7 @@ namespace EcoSort {
                       m_debugLightProgram;
         
         Mesh m_screenMesh,
+             m_guiQuad,
         
              m_debugLightMesh;
 

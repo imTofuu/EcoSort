@@ -90,6 +90,7 @@ namespace EcoSort {
         m_finalProgram.setInt("u_screen", 0);
 
         m_screenMesh = *AssetFetcher::meshFromPath("res/Models/Fullscreen.obj");
+        m_guiQuad = *AssetFetcher::meshFromPath("res/Models/GUIQuad.obj");
         m_debugLightMesh = *AssetFetcher::meshFromPath("res/Models/Cube.obj");
 
         m_whiteTexture.setData("res/Textures/white.png");
@@ -122,7 +123,7 @@ namespace EcoSort {
     
     void Renderer::renderScene(Scene& scene, RenderTarget* renderTarget) {
 
-        // GEOMETRY PASS
+        // GEOMETRY PASS -----------------------------------------------------|>
 
         glEnable(GL_DEPTH_TEST);
 
@@ -148,7 +149,8 @@ namespace EcoSort {
         auto projection = glm::perspective(camera->fov, 
             static_cast<float>(m_width) / static_cast<float>(m_height),
             0.1f, 100.0f);
-        auto view = cameraTransform->getTransformation();
+        auto view = glm::mat4_cast(glm::conjugate(cameraTransform->rotation))
+            * glm::translate(glm::mat4(1.0f), -cameraTransform->position);
 
         m_geometryProgram.setMat4("u_projection", glm::value_ptr(projection));
         m_geometryProgram.setMat4("u_view", glm::value_ptr(view));
@@ -166,7 +168,7 @@ namespace EcoSort {
 
         glDisable(GL_DEPTH_TEST);
 
-        // LIGHTING PASS
+        // LIGHTING PASS -----------------------------------------------------|>
 
         glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
@@ -201,7 +203,7 @@ namespace EcoSort {
 
         glDisable(GL_BLEND);
 
-        // GUI PASS
+        // GUI PASS ----------------------------------------------------------|>
 
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
@@ -224,36 +226,31 @@ namespace EcoSort {
 
         m_guiProgram.setMat4("u_projection", glm::value_ptr(guiProjection));
 
-        for (auto& [ gui, transform ] : scene.findAll<GUIComponent, Transform2DComponent>()) {
+        for (auto& [ gui, transform ] : scene.findAll<GUIFrameComponent, Transform2DComponent>()) {
 
-            TransformComponent scaledTransform;
+            TransformComponent scaledTransform = getAbsoluteTransform2D(*transform);
 
-            scaledTransform.position = glm::vec3(
-                transform->position.offset.x + (transform->position.scale.x * m_width),
-                transform->position.offset.y + (transform->position.scale.y * m_height),
-                transform->zIndex
-            );
-            scaledTransform.scale = glm::vec3(
-                transform->size.offset.x + (transform->size.scale.x * m_width),
-                transform->size.offset.y + (transform->size.scale.y * m_height),
-                1.0f
-            );
+            for (auto& [ childgui, childTransform ] : gui->guis) {
 
-            auto model = scaledTransform.getTransformation();
-            m_guiProgram.setMat4("u_model", glm::value_ptr(model));
+                TransformComponent childScaledTransform = getRelativeTransform2D(childTransform, scaledTransform);
 
-            if (gui->image) {
-                Texture::setUnit(0);
-                gui->image->bind();
-            } else {
-                Texture::setUnit(0);
-                m_whiteTexture.bind();
+                auto model = childScaledTransform.getTransformation();
+                m_guiProgram.setMat4("u_model", glm::value_ptr(model));
+
+                if (childgui.image) {
+                    Texture::setUnit(0);
+                    childgui.image->bind();
+                } else {
+                    Texture::setUnit(0);
+                    m_whiteTexture.bind();
+                }
+
+                m_guiProgram.setFloats("u_colour", glm::value_ptr(childgui.colour), 4);
+
+                // Since screenMesh is a generic quad, it can be used for this too.
+                m_guiQuad.draw();
+                
             }
-
-            m_guiProgram.setFloats("u_colour", glm::value_ptr(gui->colour), 4);
-
-            // Since screenMesh is a generic quad, it can be used for this too.
-            m_screenMesh.draw();
         }
 
         glDisable(GL_DEPTH_TEST);
@@ -262,7 +259,7 @@ namespace EcoSort {
 
         glClearColor(0, 0, 0, 1);
 
-        // FINAL PASS
+        // FINAL PASS --------------------------------------------------------|>
 
         glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
@@ -278,7 +275,7 @@ namespace EcoSort {
 
 #ifdef RG_DEBUG_SHOW_LIGHTS
 
-        // DEBUG LIGHTS SUBPASS
+        // DEBUG LIGHTS SUBPASS ----------------------------------------------|>
 
         glEnable(GL_DEPTH_TEST);
 
@@ -347,5 +344,25 @@ namespace EcoSort {
             GL_LINEAR
         );
     }
-    
+
+    TransformComponent Renderer::getAbsoluteTransform2D(const Transform2DComponent& transform) {
+        return getRelativeTransform2D(transform, { {}, { m_width, m_height, 1 } });
+    }
+
+    TransformComponent Renderer::getRelativeTransform2D(const Transform2DComponent& child, const TransformComponent& parent) {
+        TransformComponent result;
+
+        result.position = glm::vec3(
+            parent.position.x + child.position.offset.x + (child.position.scale.x * parent.scale.x),
+            parent.position.y + child.position.offset.y + (child.position.scale.y * parent.scale.y),
+            child.zIndex
+        );
+        result.scale = glm::vec3(
+            child.size.offset.x + (child.size.scale.x * parent.scale.x),
+            child.size.offset.y + (child.size.scale.y * parent.scale.y),
+            1.0f
+        );
+
+        return result;
+    }
 }

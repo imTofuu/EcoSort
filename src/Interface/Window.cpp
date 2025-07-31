@@ -16,7 +16,13 @@ namespace EcoSort {
     void glfwMouseMoveCallback(GLFWwindow* window, double xpos, double ypos) {
         auto* windowPtr = static_cast<Window*>(glfwGetWindowUserPointer(window));
 
-        windowPtr->getInterface().handleMouseMove(xpos, ypos);
+        int fw, fh, w, h;
+        windowPtr->getFramebufferSize(&fw, &fh);
+        windowPtr->getSize(&w, &h);
+        
+        windowPtr->getInterface().handleMouseMove(
+            xpos * (static_cast<float>(fw) / w),
+            ypos * (static_cast<float>(fh) / h));
     }
 
     void glfwMouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
@@ -67,7 +73,7 @@ namespace EcoSort {
         glfwSetWindowSizeCallback(m_window, glfwWindowSizeCallback);
 
         int result = gladLoadGL(glfwGetProcAddress);
-        LOGGER.assert(result, "Failed to initialize GLAD");
+        LOGGER.strongAssert(result, "Failed to initialize GLAD");
         LOGGER.debug("OpenGL Version: {}", reinterpret_cast<const char *>(glGetString(GL_VERSION)));
 
         int w, h;
@@ -82,7 +88,7 @@ namespace EcoSort {
     
     void Window::update() {
 
-        m_renderer->renderScene(Game::getInstance()->getScene(), nullptr);
+        m_renderer->renderScene(Game::getInstance()->getActiveScene(), nullptr);
         
         glfwSwapBuffers(m_window);
     }

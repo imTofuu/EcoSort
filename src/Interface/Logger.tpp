@@ -5,12 +5,12 @@
 namespace EcoSort {
 
     template<typename... Args>
-    void Logger::assert(bool condition, const std::string& message, Args... args) {
-        assert(condition, message.c_str(), args...);
+    void Logger::strongAssert(bool condition, const std::string& message, Args... args) {
+        strongAssert(condition, message.c_str(), args...);
     }
 
     template<typename... Args>
-    void Logger::assert(bool condition, const char* message, Args... args) {
+    void Logger::strongAssert(bool condition, const char* message, Args... args) {
         if (condition) return;
         error("Failed assertion: " + std::string(message), args...);
     }

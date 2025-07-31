@@ -10,9 +10,9 @@ namespace EcoSort {
         explicit Logger(const char* name) : m_name(name) {}
 
         template<typename... Args>
-        void assert(bool condition, const std::string& message, Args... args);
+        void strongAssert(bool condition, const std::string& message, Args... args);
         template<typename... Args>
-        void assert(bool condition, const char* message, Args... args);
+        void strongAssert(bool condition, const char* message, Args... args);
         template<typename... Args>
         void weakAssert(bool condition, const std::string& message, Args... args);
         template<typename... Args>

@@ -59,6 +59,15 @@ namespace EcoSort {
         glm::vec4 colour = glm::vec4(1.0f);
         std::shared_ptr<Texture> image = nullptr;
 
+        bool isClicked = false;
+        bool isHovered = false;
+
+    };
+
+    struct GUIFrameComponent {
+
+        std::vector<std::pair<GUIComponent, Transform2DComponent>> guis;
+        
     };
     
 }

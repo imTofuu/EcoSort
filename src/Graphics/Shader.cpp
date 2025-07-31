@@ -16,7 +16,7 @@ namespace EcoSort {
         std::string shaderSource;
 
         std::ifstream file(path);
-        LOGGER.assert(file.is_open(), "Failed to open shader file: {}", path);
+        LOGGER.strongAssert(file.is_open(), "Failed to open shader file: {}", path);
 
         std::stringstream buffer;
         buffer << file.rdbuf() << '\0';

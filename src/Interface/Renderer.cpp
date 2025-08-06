@@ -148,7 +148,7 @@ namespace EcoSort {
 
         auto projection = glm::perspective(camera->fov, 
             static_cast<float>(m_width) / static_cast<float>(m_height),
-            0.1f, 100.0f);
+            0.1f, 10000.0f);
         auto view = glm::mat4_cast(glm::conjugate(cameraTransform->rotation))
             * glm::translate(glm::mat4(1.0f), -cameraTransform->position);
 
@@ -230,7 +230,9 @@ namespace EcoSort {
 
             TransformComponent scaledTransform = getAbsoluteTransform2D(*transform);
 
-            for (auto& [ childgui, childTransform ] : gui->guis) {
+            for (auto& childGuiptr : gui->guis) {
+
+                auto& [ childgui, childTransform ] = *childGuiptr;
 
                 TransformComponent childScaledTransform = getRelativeTransform2D(childTransform, scaledTransform);
 

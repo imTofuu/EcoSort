@@ -6,6 +6,7 @@
     <mapping directory="$PROJECT_DIR$/lib/boo" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/lib/glfw" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/lib/glm" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/qu3e" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/lib/stbimage" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/lib/tinyobj" vcs="Git" />
   </component>

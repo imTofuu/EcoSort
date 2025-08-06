@@ -67,6 +67,7 @@ target_include_directories(EcoSort PRIVATE
         lib/tinyobj
         lib/glm
         lib/stbimage
+        lib/qu3e/src
                                         PUBLIC
         src
 )
@@ -79,6 +80,7 @@ target_link_libraries(EcoSort
         tinyobjloader
         glm
         stbimage
+        qu3e
 )
 
 # Add the GLFW_INCLUDE_NONE preprocessor definition to the EcoSort target. This is used to tell

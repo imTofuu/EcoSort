@@ -8,6 +8,8 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
+#include "dynamics/q3Body.h"
+
 namespace EcoSort {
 
     struct TransformComponent {
@@ -66,7 +68,31 @@ namespace EcoSort {
 
     struct GUIFrameComponent {
 
-        std::vector<std::pair<GUIComponent, Transform2DComponent>> guis;
+        std::vector<std::shared_ptr<std::pair<GUIComponent, Transform2DComponent>>> guis;
+        
+    };
+
+    struct TagComponent {
+        std::string name;
+    };
+
+    struct RigidBodyComponent {
+    public:
+
+        q3BodyType bodyType = eDynamicBody;
+
+        q3Vec3 offset;
+        q3Vec3 scale = { 1.0f, 1.0f, 1.0f };
+        q3Vec3 rotationOffsetAxis = { 0.0f, 0.0f, 0.0f };
+        float rotationOffsetAngle = 0.0f;
+
+    private:
+
+        friend class Game;
+
+        // Body is technically not safe to access until the next frame, cannot be bothered to put in more effort
+        // to make this actually good
+        q3Body* body = nullptr;
         
     };
     

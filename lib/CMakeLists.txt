@@ -51,9 +51,22 @@ FetchContent_Declare(
         
         SOURCE_DIR    ${PROJECT_SOURCE_DIR}/lib/stbimage
 )
+FetchContent_Declare(
+        qu3e
+        GIT_REPOSITORY https://github.com/RandyGaul/qu3e.git
+        GIT_TAG        master
+        GIT_SHALLOW    TRUE
+        
+        SOURCE_DIR    ${PROJECT_SOURCE_DIR}/lib/qu3e
+)
 
 # Run the CMakeLists files in the libraries.
-FetchContent_MakeAvailable(glfw glad_fetch boo tinyobj glm stbimage)
+FetchContent_MakeAvailable(glfw glad_fetch boo tinyobj glm stbimage qu3e)
+
+target_sources(qu3e PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/qu3e/demo/Clock.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/qu3e/demo/Clock.h
+)
 
 add_library(stbimage STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/stb_image.cpp

@@ -3,9 +3,9 @@
 #include "Object.h"
 
 namespace EcoSort {
-
-    Object Scene::createObject() {
-        return Object(*this);
+    
+     Object Scene::createObject() {
+         return Object(*this);
     }
 
     

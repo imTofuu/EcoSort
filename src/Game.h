@@ -9,7 +9,7 @@
 
 namespace EcoSort {
 
-    class Game {
+    class Game : public q3ContactListener {
     public:
         
         void run();
@@ -19,6 +19,9 @@ namespace EcoSort {
         Scene& getActiveScene() { return m_activeScene; }
 
         static void setInstance(Game* instance) { s_instance = instance; }
+
+        void BeginContact(const q3ContactConstraint *contact) override;
+        void EndContact(const q3ContactConstraint *contact) override;
 
     private:
 

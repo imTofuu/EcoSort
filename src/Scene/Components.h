@@ -85,6 +85,7 @@ namespace EcoSort {
         q3Vec3 scale = { 1.0f, 1.0f, 1.0f };
         q3Vec3 rotationOffsetAxis = { 0.0f, 0.0f, 0.0f };
         float rotationOffsetAngle = 0.0f;
+        void* userData = nullptr;
 
     private:
 
@@ -95,5 +96,13 @@ namespace EcoSort {
         q3Body* body = nullptr;
         
     };
-    
+
+    struct ConveyorComponent {
+        bool flipped = false;
+        
+    };
+
+    struct PusherComponent {
+        float progress = 0.0f;
+    };
 }

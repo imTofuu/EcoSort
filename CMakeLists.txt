@@ -92,7 +92,11 @@ target_compile_definitions(EcoSort PRIVATE
 # Add a PUBLIC compile definition (definition will be inherited to targets that link this one) that
 # if CMake is being built in debug so debug features (such as the debug log severity) can be preprocessed
 # out in release builds.
-if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if(NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build (Debug or Release)" FORCE)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         target_compile_definitions(EcoSort PUBLIC
                 RG_DEBUG
                 RG_DEBUG_SHOW_LIGHTS

@@ -9,6 +9,7 @@
 #include <glm/vec3.hpp>
 
 #include "dynamics/q3Body.h"
+#include "Interface/Interface.h"
 
 namespace EcoSort {
 
@@ -99,10 +100,10 @@ namespace EcoSort {
 
     struct ConveyorComponent {
         bool flipped = false;
-        
     };
 
     struct PusherComponent {
         float progress = 0.0f;
+        Key activationKey = Key::Q;
     };
 }

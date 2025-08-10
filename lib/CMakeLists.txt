@@ -10,12 +10,14 @@ FetchContent_Declare(
         GIT_TAG        glad2
         GIT_SHALLOW    TRUE
         SOURCE_SUBDIR  cmake
+        GIT_PROGRESS TRUE
 )
 FetchContent_Declare(
         glfw
         GIT_REPOSITORY https://github.com/glfw/glfw.git
         GIT_TAG        master
         GIT_SHALLOW    TRUE
+        GIT_PROGRESS TRUE
 
         SOURCE_DIR    ${PROJECT_SOURCE_DIR}/lib/glfw
 )
@@ -24,6 +26,7 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/imtofuu/boo.git
         GIT_TAG        main
         GIT_SHALLOW    TRUE
+        GIT_PROGRESS TRUE
         
         SOURCE_DIR    ${PROJECT_SOURCE_DIR}/lib/boo
 )
@@ -32,6 +35,7 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/tinyobjloader/tinyobjloader.git
         GIT_TAG        release
         GIT_SHALLOW    TRUE
+        GIT_PROGRESS TRUE
         
         SOURCE_DIR    ${PROJECT_SOURCE_DIR}/lib/tinyobj
 )
@@ -40,6 +44,7 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/g-truc/glm.git
         GIT_TAG        master
         GIT_SHALLOW    TRUE
+        GIT_PROGRESS TRUE
         
         SOURCE_DIR    ${PROJECT_SOURCE_DIR}/lib/glm
 )
@@ -48,14 +53,18 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/nothings/stb.git
         GIT_TAG        master
         GIT_SHALLOW    TRUE
+        GIT_PROGRESS TRUE
         
         SOURCE_DIR    ${PROJECT_SOURCE_DIR}/lib/stbimage
 )
+# This is not my library, but a fork to fix some issues since the library is no longer maintained. Original is by 
+# RandyGaul.
 FetchContent_Declare(
         qu3e
-        GIT_REPOSITORY https://github.com/RandyGaul/qu3e.git
+        GIT_REPOSITORY https://github.com/imtofuu/qu3e.git
         GIT_TAG        master
         GIT_SHALLOW    TRUE
+        GIT_PROGRESS TRUE
         
         SOURCE_DIR    ${PROJECT_SOURCE_DIR}/lib/qu3e
 )

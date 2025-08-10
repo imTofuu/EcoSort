@@ -178,7 +178,7 @@ namespace EcoSort {
                     Object light = m_gameScene.createObject();
                     auto lightTransform = light.addComponent<TransformComponent>();
                     auto lightComp = light.addComponent<LightComponent>();
-                    lightTransform->position = conveyorTransform->position + glm::vec3(10.0f, 3, 0);
+                    lightTransform->position = conveyorTransform->position + glm::vec3(0, 5.0f, 0);
                     lightComp->type = LightComponent::LightType::POINT;
                     lightComp->colour = glm::vec3(1.0f, 0.0f, 0.0f);
                     lightComp->distance = 100.0f;
@@ -188,7 +188,7 @@ namespace EcoSort {
                         auto pusherTransform = pusher.addComponent<TransformComponent>();
                         auto pusherMesh = pusher.addComponent<Mesh>();
                         auto pusherRigidBody = pusher.addComponent<RigidBodyComponent>();
-                        pusher.addComponent<PusherComponent>();
+                        auto pusherComp = pusher.addComponent<PusherComponent>();
                         pusherTransform->position = glm::vec3(0.0f, 0.0f, (-6 * 11.5f) + 23 * i);
                         pusherTransform->rotation = glm::angleAxis(glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f));
                         pusher.setComponent(*AssetFetcher::meshFromPath("res/Models/Pusher.obj"));
@@ -196,6 +196,7 @@ namespace EcoSort {
                         pusherRigidBody->bodyType = eStaticBody;
                         pusherRigidBody->scale = { 0.15, 100.0f, 23.0f };
                         pusherRigidBody->offset = { -12.5f, 0, 0.0f };
+                        pusherComp->activationKey = i == 3 ? Key::Q : Key::E;
                     }
                 }
             }
@@ -321,7 +322,7 @@ namespace EcoSort {
                 }
 
                 for (auto& [ pusher, pusherTransform, pusherRigidBody ] : m_gameScene.findAll<PusherComponent, TransformComponent, RigidBodyComponent>()) {
-                    if (!pusher->progress && !interface.getKeyEnabledState(Key::E)) continue;
+                    if (!pusher->progress && !interface.getKeyEnabledState(pusher->activationKey)) continue;
                     pusher->progress += dt;
                     pusher->progress = glm::clamp(pusher->progress, 0.0f, 2.0f);
                     auto newOffset = 26.5f * (glm::abs(pusher->progress - 1.0f) - 1.0f);

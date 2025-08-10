@@ -34,3 +34,10 @@ res/Models/Conveyor.obj.mtl filter=lfs diff=lfs merge=lfs -text
 res/UI/Play.png filter=lfs diff=lfs merge=lfs -text
 res/Models/Conveyor.obj filter=lfs diff=lfs merge=lfs -text
 res/UI/Quit.png filter=lfs diff=lfs merge=lfs -text
+res/UI filter=lfs diff=lfs merge=lfs -text
+res/Models/ShortConveyor.obj filter=lfs diff=lfs merge=lfs -text
+res/Models/Pusher.mtl filter=lfs diff=lfs merge=lfs -text
+res/Models/Pusher.obj.mtl filter=lfs diff=lfs merge=lfs -text
+res/Models/ShortConveyor.obj.mtl filter=lfs diff=lfs merge=lfs -text
+res/Models/Pusher.obj filter=lfs diff=lfs merge=lfs -text
+res/Models/ShortConveyor.mtl filter=lfs diff=lfs merge=lfs -text

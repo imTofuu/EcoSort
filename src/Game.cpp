@@ -1,13 +1,13 @@
 #include "Game.h"
 
-#include "glm/gtc/type_ptr.hpp"
+#include <glm/gtc/type_ptr.hpp>
 #include <GLFW/glfw3.h>
-
 #include "AssetFetcher.h"
-#include "../lib/qu3e/demo/Clock.h"
+#include <../demo/Clock.h>
 #include "Interface/Window.h"
 #include "Scene/Components.h"
 #include "Scene/Object.h"
+#include <dynamics/q3Contact.h>
 
 #undef assert
 
@@ -18,6 +18,28 @@ namespace EcoSort {
         static Logger logger("GLFW");
         logger.error("Error {}: {}", error, description);
     }
+
+    std::unordered_map<q3Body*, std::vector<q3Body*>> touchingConveyors;
+
+    void Game::BeginContact(const q3ContactConstraint* contact) {
+        // This will not work if i ever need anything else to have user data
+
+        if (auto userData = contact->bodyA->GetUserData(); userData) {
+            touchingConveyors[contact->bodyA].emplace_back(contact->bodyB);
+        } else if (auto userData = contact->bodyB->GetUserData(); userData) {
+            touchingConveyors[contact->bodyB].emplace_back(contact->bodyA);
+        }
+    }
+
+    void Game::EndContact(const q3ContactConstraint* contact) {
+        if (auto userData = contact->bodyA->GetUserData(); userData) {
+            std::erase(touchingConveyors[contact->bodyA], contact->bodyB);
+        } else if (auto userData = contact->bodyB->GetUserData(); userData) {
+            std::erase(touchingConveyors[contact->bodyB], contact->bodyA);
+        }
+    }
+
+
 
     void Game::run() {
         m_logger.info("Initialising game");
@@ -48,6 +70,8 @@ namespace EcoSort {
 #endif
             m_logger.info("Initialised window");
 
+            m_physicsScene.SetContactListener(this);
+
             // MAIN MENU -----------------------------------------------------|>
 
             {
@@ -57,38 +81,14 @@ namespace EcoSort {
                 menuCameraTransform->position = glm::vec3(-1.0f, 5.0f, -10.0f);
                 menuCameraTransform->rotation = glm::quatLookAt(-glm::normalize(menuCameraTransform->position), glm::vec3(0.0f, 1.0f, 0.0f));
 
-                Object object = m_menuScene.createObject();
-                auto objectTransform = object.addComponent<TransformComponent>();
-                auto mesh = object.addComponent<Mesh>();
-                auto rigidBodyComp = object.addComponent<RigidBodyComponent>();
-                objectTransform->position = glm::vec3(0.0f, 2.0f, 0.0f);
-                objectTransform->rotation = glm::angleAxis(glm::pi<float>() / 2, glm::vec3(1.0f, 0.0f, 0.0f));
-                objectTransform->scale = glm::vec3(0.02f);
-                rigidBodyComp->bodyType = eDynamicBody;
-                rigidBodyComp->scale = { 3.6666f, 2.6666f, 1.5f };
-                object.setComponent(*AssetFetcher::meshFromPath("res/Models/StanfordDragon.obj"));
-                mesh->setPrimaryTexture("res/Textures/white.png");
-
-                Object floor = m_menuScene.createObject();
-                auto floorTransform = floor.addComponent<TransformComponent>();
-                floorTransform->position = glm::vec3(0.0f, -1.0f, 0.0f);
-                floorTransform->rotation = glm::angleAxis(-glm::pi<float>() / 8, glm::vec3(0.0f, 0, 1.0f));
-                floorTransform->scale = glm::vec3(5.0f, 1.0f, 5.0f);
-
-                auto floorRigidBody = floor.addComponent<RigidBodyComponent>();
-                floorRigidBody->bodyType = eStaticBody;
-                floorRigidBody->scale = { 10.0f, 2.0f, 10.0f };
-
-                auto floorMesh = floor.addComponent<Mesh>();
-                floor.setComponent(*AssetFetcher::meshFromPath("res/Models/Cube.obj"));
-                floorMesh->setPrimaryTexture("res/Textures/white.png");
-
                 Object sun = m_menuScene.createObject();
                 auto lightTransform = sun.addComponent<TransformComponent>();
                 auto lightComp = sun.addComponent<LightComponent>();
                 lightTransform->rotation = glm::quatLookAt(-glm::normalize(glm::vec3(-5.0f, 20.0f, -1.0f)), glm::vec3(0.0f, 1.0f, 0.0f));
                 lightComp->type = LightComponent::LightType::DIRECTIONAL;
             }
+
+            // Still main menu, but these references are needed outside the above scope
 
             Object menuList = m_menuScene.createObject();
             auto menuListTransform = menuList.addComponent<Transform2DComponent>();
@@ -133,53 +133,71 @@ namespace EcoSort {
             quitButton.image = std::make_shared<Texture>();
             quitButton.image->setData("res/UI/Quit.png");
 
-            Object gameCamera = m_gameScene.createObject();
-            auto gameCameraComp = gameCamera.addComponent<CameraComponent>();
-            auto gameCameraTransform = gameCamera.addComponent<TransformComponent>();
-            gameCameraTransform->position = glm::vec3(-75.0f, 30.0f, -75.0f);
-            gameCameraTransform->rotation = glm::quatLookAt(-glm::normalize(gameCameraTransform->position), glm::vec3(0.0f, 1.0f, 0.0f));
+            {
+                Object gameCamera = m_gameScene.createObject();
+                auto gameCameraComp = gameCamera.addComponent<CameraComponent>();
+                auto gameCameraTransform = gameCamera.addComponent<TransformComponent>();
+                gameCameraTransform->position = glm::vec3(-150.0f, 75.0f, 0.0f);
+                gameCameraTransform->rotation = glm::quatLookAt(-glm::normalize(gameCameraTransform->position), glm::vec3(0.0f, 1.0f, 0.0f));
 
-            Object gameSun = m_gameScene.createObject();
-            auto gameSunTransform = gameSun.addComponent<TransformComponent>();
-            auto gameSunLight = gameSun.addComponent<LightComponent>();
-            gameSunTransform->rotation = glm::quatLookAt(-glm::normalize(glm::vec3(-5.0f, 20.0f, -1.0f)), glm::vec3(0.0f, 1.0f, 0.0f));
-            gameSunLight->type = LightComponent::LightType::DIRECTIONAL;
+                Object gameSun = m_gameScene.createObject();
+                auto gameSunTransform = gameSun.addComponent<TransformComponent>();
+                auto gameSunLight = gameSun.addComponent<LightComponent>();
+                gameSunTransform->rotation = glm::quatLookAt(-glm::normalize((gameCameraTransform->position - glm::vec3(10.0f))), glm::vec3(0.0f, 1.0f, 0.0f));
+                gameSunLight->type = LightComponent::LightType::DIRECTIONAL;
+                gameSunLight->colour = glm::vec3(0.5f);
 
-            Object gameDragon = m_gameScene.createObject();
-            auto gameDragonTransform = gameDragon.addComponent<TransformComponent>();
-            auto gameDragonMesh = gameDragon.addComponent<Mesh>();
-            auto gameDragonRigidBody = gameDragon.addComponent<RigidBodyComponent>();
-            gameDragonTransform->position = glm::vec3(0.0f, 70.0f, 0.0f);
-            //gameDragonTransform->rotation = glm::angleAxis(glm::pi<float>() / 2, glm::vec3(1.0f, 0.0f, 0.0f));
-            gameDragonTransform->scale = glm::vec3(0.1f, 0.1f, 0.1f);
-            gameDragonRigidBody->bodyType = eDynamicBody;
-            gameDragonRigidBody->scale = { 18.3f, 13.3f, 7.5f };
-            gameDragon.setComponent(*AssetFetcher::meshFromPath("res/Models/StanfordDragon.obj"));
-            gameDragonMesh->setPrimaryTexture("res/Textures/white.png");
+                Object test = m_gameScene.createObject();
+                auto testTransform = test.addComponent<TransformComponent>();
+                auto testMesh = test.addComponent<Mesh>();
+                auto testRigidBody = test.addComponent<RigidBodyComponent>();
+                testTransform->position = glm::vec3(0.0f, 10.0f, -6 * 11.5f);
+                testTransform->scale = glm::vec3(5.0f);
+                test.setComponent(*AssetFetcher::meshFromPath("res/Models/Suzanne.obj"));
+                testMesh->setPrimaryTexture("res/Textures/img.png");
+                testRigidBody->bodyType = eDynamicBody;
+                testRigidBody->scale = { 10.0f, 10.0f, 10.0f };
 
-            Object gameFloor = m_gameScene.createObject();
-            auto gameFloorTransform = gameFloor.addComponent<TransformComponent>();
-            auto gameFloorRigidBody = gameFloor.addComponent<RigidBodyComponent>();
-            auto gameFloorMesh = gameFloor.addComponent<Mesh>();
-            gameFloorTransform->position = glm::vec3(0.0f, -1.0f, 0.0f);
-            //gameFloorTransform->rotation = glm::angleAxis(glm::pi<float>() / 8, glm::vec3(0.0f, 0, 1.0f));
-            gameFloorTransform->scale = glm::vec3(100.0f, 1.0f, 100.0f);
-            gameFloorRigidBody->bodyType = eStaticBody;
-            gameFloorRigidBody->scale = { 200.0f, 1.0f, 200.0f };
-            gameFloor.setComponent(*AssetFetcher::meshFromPath("res/Models/Cube.obj"));
-            gameFloorMesh->setPrimaryTexture("res/Textures/white.png");
+                for (int i = 0; i < 7; i++) {
+                    Object conveyor = m_gameScene.createObject();
+                    auto conveyorTransform = conveyor.addComponent<TransformComponent>();
+                    auto conveyorMesh = conveyor.addComponent<Mesh>();
+                    auto conveyorRigidBody = conveyor.addComponent<RigidBodyComponent>();
+                    conveyor.addComponent<ConveyorComponent>();
 
-            for (int i = 0; i < 5; i++) {
-                Object conveyor = m_gameScene.createObject();
-                auto conveyorTransform = conveyor.addComponent<TransformComponent>();
-                auto conveyorMesh = conveyor.addComponent<Mesh>();
-                auto conveyorRigidBody = conveyor.addComponent<RigidBodyComponent>();
+                    conveyorTransform->position = glm::vec3(0.0f, 0.0f, (-6 * 11.5f) + 23 * i);
 
-                conveyorTransform->position = glm::vec3(0.0f, 0.0f, 25 * i);
-                conveyor.setComponent(*AssetFetcher::meshFromPath("res/Models/Conveyor.obj"));
-                conveyorMesh->setPrimaryTexture("res/Textures/white.png");
-                conveyorRigidBody->bodyType = eStaticBody;
-                conveyorRigidBody->scale = { 25.0f, 3.0f, 12.5f };
+                    auto conveyorMeshPath = std::format("res/Models/{}Conveyor.obj", i == 3 || i == 5 ? "Short" : "");
+                    
+                    conveyor.setComponent(*AssetFetcher::meshFromPath(conveyorMeshPath.c_str()));
+                    conveyorMesh->setPrimaryTexture("res/Textures/white.png");
+                    conveyorRigidBody->bodyType = eStaticBody;
+                    conveyorRigidBody->scale = { 25.0f, 3.0f, 23.0f };
+                    conveyorRigidBody->userData = new BOO::ComponentRef(conveyorTransform);
+                    
+                    Object light = m_gameScene.createObject();
+                    auto lightTransform = light.addComponent<TransformComponent>();
+                    auto lightComp = light.addComponent<LightComponent>();
+                    lightTransform->position = conveyorTransform->position + glm::vec3(10.0f, 3, 0);
+                    lightComp->type = LightComponent::LightType::POINT;
+                    lightComp->colour = glm::vec3(1.0f, 0.0f, 0.0f);
+                    lightComp->distance = 100.0f;
+
+                    if (i == 3 || i == 5) {
+                        Object pusher = m_gameScene.createObject();
+                        auto pusherTransform = pusher.addComponent<TransformComponent>();
+                        auto pusherMesh = pusher.addComponent<Mesh>();
+                        auto pusherRigidBody = pusher.addComponent<RigidBodyComponent>();
+                        pusher.addComponent<PusherComponent>();
+                        pusherTransform->position = glm::vec3(0.0f, 0.0f, (-6 * 11.5f) + 23 * i);
+                        pusherTransform->rotation = glm::angleAxis(glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f));
+                        pusher.setComponent(*AssetFetcher::meshFromPath("res/Models/Pusher.obj"));
+                        pusherMesh->setPrimaryTexture("res/Textures/white.png");
+                        pusherRigidBody->bodyType = eStaticBody;
+                        pusherRigidBody->scale = { 0.15, 100.0f, 23.0f };
+                        pusherRigidBody->offset = { -12.5f, 0, 0.0f };
+                    }
+                }
             }
 
             double startTime = glfwGetTime();
@@ -189,6 +207,9 @@ namespace EcoSort {
 
             // While the window is open, i.e. the operating system has not requested for it to be closed.
             while (window.isOpen()) {
+
+                double dt = glfwGetTime() - startTime;
+                startTime = glfwGetTime();
 
                 // Poll events in GLFW, which will handle OS events and user interfaces, such as the keyboard and mouse.
                 glfwPollEvents();
@@ -225,15 +246,16 @@ namespace EcoSort {
 
                 auto physicsQuery = m_activeScene.findAll<RigidBodyComponent, TransformComponent>();
                 for (auto& [ rigidBody, transform ] : physicsQuery) {
+                    
+                    auto rotAxis = glm::axis(transform->rotation);
+                    q3Vec3 q3RotationAxis = { rotAxis.x, rotAxis.y, rotAxis.z };
                     if (!rigidBody->body) {
                         q3BodyDef bodyDef;
 
-                        //bodyDef.userData = reinterpret_cast<void*>(entity);
-
-                        auto rotAxis = glm::axis(transform->rotation);
+                        bodyDef.userData = rigidBody->userData;
                         
                         bodyDef.position = { transform->position.x, transform->position.y, transform->position.z };
-                        bodyDef.axis = { rotAxis.x, rotAxis.y, rotAxis.z };
+                        bodyDef.axis = q3RotationAxis;
                         bodyDef.angle = glm::angle(transform->rotation);
                         bodyDef.bodyType = rigidBody->bodyType;
                         
@@ -250,6 +272,11 @@ namespace EcoSort {
                         boxDef.Set(boxTransform, rigidBody->scale);
                         rigidBody->body->AddBox(boxDef);
                     }
+                    rigidBody->body->SetTransform({
+                        transform->position.x,
+                        transform->position.y,
+                        transform->position.z
+                    }, q3RotationAxis, glm::angle(transform->rotation));
                 }
 
                 float time = physicsClock.Start();
@@ -280,6 +307,28 @@ namespace EcoSort {
                     
                 }
 
+                // game updating
+
+                for (auto& [ conveyorBody, otherBodies ] : touchingConveyors) {
+                    auto conveyorTransform = *static_cast<BOO::ComponentRef<TransformComponent>*>(conveyorBody->GetUserData());
+                    
+                    auto rotationMatrix = glm::mat3_cast(conveyorTransform->rotation);
+                    auto conveyorDirection = rotationMatrix * glm::vec3(0.0f, 0.0f, 1.0f);
+
+                    for (auto& otherBody : otherBodies) {
+                        otherBody->SetLinearVelocity({ conveyorDirection.x * 10, 0, conveyorDirection.z * 10 });
+                    }
+                }
+
+                for (auto& [ pusher, pusherTransform, pusherRigidBody ] : m_gameScene.findAll<PusherComponent, TransformComponent, RigidBodyComponent>()) {
+                    if (!pusher->progress && !interface.getKeyEnabledState(Key::E)) continue;
+                    pusher->progress += dt;
+                    pusher->progress = glm::clamp(pusher->progress, 0.0f, 2.0f);
+                    auto newOffset = 26.5f * (glm::abs(pusher->progress - 1.0f) - 1.0f);
+                    pusherTransform->position.x = newOffset;
+                    if (pusher->progress >= 2.0f) pusher->progress = 0.0f;
+                }
+                
                 if (playButton.isClicked) {
                     m_physicsScene.RemoveAllBodies();
 
@@ -297,10 +346,12 @@ namespace EcoSort {
                 frames++;
 
                 // Reset and display the fps counter if a second has passed
-                if (double time = glfwGetTime(); time - startTime > 1.0) {
+                static double frameAccumulator = 0.0f;
+                frameAccumulator += dt;
+                if (frameAccumulator >= 1.0) {
                     window.setTitle(std::format("EcoSort ({} FPS)", frames).c_str());
                     frames = 0;
-                    startTime = time;
+                    frameAccumulator = 0;
                 }
             }
         }

@@ -25,6 +25,8 @@ namespace EcoSort {
 
     private:
 
+        unsigned int m_score = 0;
+
         static Game* s_instance;
 
         Scene m_gameScene,

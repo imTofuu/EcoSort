@@ -30,6 +30,7 @@ namespace EcoSort {
     }
 
     void Texture::setData(const char* path) {
+        LOGGER.debug("Loading texture from path: {}", path);
         int w, h;
         stbi_set_flip_vertically_on_load(true);
         unsigned char* data = stbi_load(path, &w, &h, nullptr, 4);

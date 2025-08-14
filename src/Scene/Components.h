@@ -8,6 +8,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
+#include "BOO/BOO.h"
 #include "dynamics/q3Body.h"
 #include "Interface/Interface.h"
 
@@ -86,7 +87,8 @@ namespace EcoSort {
         q3Vec3 scale = { 1.0f, 1.0f, 1.0f };
         q3Vec3 rotationOffsetAxis = { 0.0f, 0.0f, 0.0f };
         float rotationOffsetAngle = 0.0f;
-        void* userData = nullptr;
+        q3Vec3 initialVelocity;
+        q3Vec3 initialAngularVelocity;
 
     private:
 
@@ -99,11 +101,25 @@ namespace EcoSort {
     };
 
     struct ConveyorComponent {
-        bool flipped = false;
+        std::vector<BOO::ComponentRef<RigidBodyComponent>> touchingRubbish; 
     };
 
     struct PusherComponent {
         float progress = 0.0f;
         Key activationKey = Key::Q;
+    };
+
+    struct RubbishComponent {
+        enum class RubbishType {
+            RUBBISH = 0,
+            RECYCLING = 1,
+            FOOD = 2
+        } type;
+    };
+
+    struct IsGameFlagComponent {};
+
+    struct CollectorComponent {
+        RubbishComponent::RubbishType rubbishType;
     };
 }

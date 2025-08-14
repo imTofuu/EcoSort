@@ -190,7 +190,7 @@ namespace EcoSort {
             m_lightingProgram.setInt("u_light.lightType", static_cast<int>(light->type));
             m_lightingProgram.setFloats("u_light.position", glm::value_ptr(transform->position), 3);
             
-            auto defaultLightDirection = glm::vec3(0.0f, 1.0f, 0.0f);
+            auto defaultLightDirection = glm::vec3(0.0f, 0.0f, -1.0f);
             auto dir = transform->rotation * defaultLightDirection;
             
             m_lightingProgram.setFloats("u_light.direction", glm::value_ptr(dir), 3);

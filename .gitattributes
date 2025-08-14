@@ -41,3 +41,12 @@ res/Models/Pusher.obj.mtl filter=lfs diff=lfs merge=lfs -text
 res/Models/ShortConveyor.obj.mtl filter=lfs diff=lfs merge=lfs -text
 res/Models/Pusher.obj filter=lfs diff=lfs merge=lfs -text
 res/Models/ShortConveyor.mtl filter=lfs diff=lfs merge=lfs -text
+res/Textures/food2.png filter=lfs diff=lfs merge=lfs -text
+res/Textures/rubbish2.png filter=lfs diff=lfs merge=lfs -text
+res/Textures/rubbish1.png filter=lfs diff=lfs merge=lfs -text
+res/Textures/food1.png filter=lfs diff=lfs merge=lfs -text
+res/Textures/rubbish0.png filter=lfs diff=lfs merge=lfs -text
+res/Textures/food0.png filter=lfs diff=lfs merge=lfs -text
+res/Textures/recycling0.png filter=lfs diff=lfs merge=lfs -text
+res/Textures/recycling1.png filter=lfs diff=lfs merge=lfs -text
+res/Textures/recycling2.png filter=lfs diff=lfs merge=lfs -text

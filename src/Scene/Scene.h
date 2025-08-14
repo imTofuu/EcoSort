@@ -7,7 +7,9 @@ namespace EcoSort {
 
     class Scene {
     public:
+        
         Object createObject();
+        void removeObject(Object& object);
 
         template<typename... T>
         BOO::QueryResult<T...> findAll() { return m_registry.queryAll<T...>(); }

@@ -9,7 +9,11 @@ namespace EcoSort {
     class Object {
     public:
 
+        Object(Scene& scene, BOO::EntityID id) : m_scene(scene), m_entityID(id) {}
         explicit Object(Scene& scene);
+
+        void destroy();
+        bool valid();
 
         template<typename T>
         BOO::ComponentRef<T> addComponent() { return m_scene.m_registry.addComponentToEntity<T>(m_entityID); }
@@ -24,6 +28,7 @@ namespace EcoSort {
 
     private:
 
+        friend class Scene;
         Scene& m_scene;
         BOO::EntityID m_entityID;
         

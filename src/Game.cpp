@@ -9,8 +9,6 @@
 #include "Scene/Object.h"
 #include <dynamics/q3Contact.h>
 
-#undef assert
-
 namespace EcoSort {
     Game *Game::s_instance = nullptr;
 
@@ -19,27 +17,123 @@ namespace EcoSort {
         logger.error("Error {}: {}", error, description);
     }
 
-    std::unordered_map<q3Body*, std::vector<q3Body*>> touchingConveyors;
-
     void Game::BeginContact(const q3ContactConstraint* contact) {
         // This will not work if i ever need anything else to have user data
 
-        if (auto userData = contact->bodyA->GetUserData(); userData) {
-            touchingConveyors[contact->bodyA].emplace_back(contact->bodyB);
-        } else if (auto userData = contact->bodyB->GetUserData(); userData) {
-            touchingConveyors[contact->bodyB].emplace_back(contact->bodyA);
+        void* userDataA = contact->bodyA->GetUserData();
+        void* userDataB = contact->bodyB->GetUserData();
+
+        if (!userDataA || !userDataB) m_logger.error("Body is missing userData");
+
+        Object* objectA = static_cast<Object*>(userDataA);
+        Object* objectB = static_cast<Object*>(userDataB);
+
+        if (!objectA->valid() || !objectB->valid()) return;
+
+        Object* conveyorObject = nullptr;
+        Object* collectorObject = nullptr;
+        Object* rubbishObject = nullptr;
+
+        if (objectA->getComponent<ConveyorComponent>()) conveyorObject = objectA;
+        if (objectB->getComponent<ConveyorComponent>()) conveyorObject = objectB;
+        if (objectA->getComponent<CollectorComponent>()) collectorObject = objectA;
+        if (objectB->getComponent<CollectorComponent>()) collectorObject = objectB;
+        if (objectA->getComponent<RubbishComponent>()) rubbishObject = objectA;
+        if (objectB->getComponent<RubbishComponent>()) rubbishObject = objectB;
+        
+        if (conveyorObject && rubbishObject) {
+            auto conveyorComp = conveyorObject->getComponent<ConveyorComponent>();
+            auto rubbishBody = rubbishObject->getComponent<RigidBodyComponent>();
+            conveyorComp->touchingRubbish.emplace_back(rubbishBody);
+        }
+
+        if (collectorObject && rubbishObject) {
+            auto collectorComp = collectorObject->getComponent<CollectorComponent>();
+            auto rubbishComp = rubbishObject->getComponent<RubbishComponent>();
+            auto rubbishBody = rubbishObject->getComponent<RigidBodyComponent>();
+            if (collectorComp->rubbishType == rubbishComp->type) m_score++;
+            rubbishObject->destroy();
         }
     }
 
     void Game::EndContact(const q3ContactConstraint* contact) {
-        if (auto userData = contact->bodyA->GetUserData(); userData) {
-            std::erase(touchingConveyors[contact->bodyA], contact->bodyB);
-        } else if (auto userData = contact->bodyB->GetUserData(); userData) {
-            std::erase(touchingConveyors[contact->bodyB], contact->bodyA);
+
+        void* userDataA = contact->bodyA->GetUserData();
+        void* userDataB = contact->bodyB->GetUserData();
+
+        if (!userDataA || !userDataB) m_logger.error("Body is missing userData");
+
+        Object* objectA = static_cast<Object*>(userDataA);
+        Object* objectB = static_cast<Object*>(userDataB);
+
+        if (!objectA->valid() || !objectB->valid()) return;
+
+        Object* conveyorObject = nullptr;
+        Object* collectorObject = nullptr;
+        Object* rubbishObject = nullptr;
+
+        if (objectA->getComponent<ConveyorComponent>()) conveyorObject = objectA;
+        if (objectB->getComponent<ConveyorComponent>()) conveyorObject = objectB;
+        if (objectA->getComponent<CollectorComponent>()) collectorObject = objectA;
+        if (objectB->getComponent<CollectorComponent>()) collectorObject = objectB;
+        if (objectA->getComponent<RubbishComponent>()) rubbishObject = objectA;
+        if (objectB->getComponent<RubbishComponent>()) rubbishObject = objectB;
+
+        if (conveyorObject && rubbishObject) {
+            auto conveyorComp = conveyorObject->getComponent<ConveyorComponent>();
+            auto rubbishBody = rubbishObject->getComponent<RigidBodyComponent>();
+            std::erase_if(
+                conveyorComp->touchingRubbish,
+                [&rubbishBody](BOO::ComponentRef<RigidBodyComponent>& other) -> bool {
+                    return rubbishBody.get() == other.get();
+                }
+            );
         }
+
+        if (collectorObject && rubbishObject) {
+            auto collectorComp = collectorObject->getComponent<CollectorComponent>();
+            auto rubbishComp = rubbishObject->getComponent<RubbishComponent>();
+            if (collectorComp->rubbishType == rubbishComp->type) m_score--;
+        }
+        
     }
 
+    Object spawnRubbish(Scene& scene, glm::vec3 position) {
+        Object rubbish = scene.createObject();
+        auto transform = rubbish.addComponent<TransformComponent>();
+        auto mesh = rubbish.addComponent<Mesh>();
+        auto rigidBody = rubbish.addComponent<RigidBodyComponent>();
+        auto rubbishComp = rubbish.addComponent<RubbishComponent>();
+        transform->position = position;
+        transform->scale = glm::vec3(5.0f);
+        rubbish.setComponent(*AssetFetcher::meshFromPath("res/Models/Cube.obj"));
+        mesh->setPrimaryTexture("res/Textures/white.png");
+        rigidBody->bodyType = eDynamicBody;
+        rigidBody->scale = { 10.0f, 10.0f, 10.0f };
 
+        rubbishComp->type = static_cast<RubbishComponent::RubbishType>(q3RandomInt(0, 2));
+        switch (rubbishComp->type) {
+            case RubbishComponent::RubbishType::RUBBISH: {
+                auto texturePath = std::format("res/Textures/rubbish{}.png", q3RandomInt(0, 2));
+                mesh->setPrimaryTexture(texturePath.c_str());
+                break;
+            }
+            case RubbishComponent::RubbishType::RECYCLING: {
+                auto texturePath = std::format("res/Textures/recycling{}.png", q3RandomInt(0, 2));
+                mesh->setPrimaryTexture(texturePath.c_str());
+                break;
+            }
+            case RubbishComponent::RubbishType::FOOD: {
+                auto texturePath = std::format("res/Textures/food{}.png", q3RandomInt(0, 2));
+                mesh->setPrimaryTexture(texturePath.c_str());
+                break;
+            }
+            default:
+                LOGGER.warn("Invalid rubbish type");
+        }
+        
+        return rubbish;
+    }
 
     void Game::run() {
         m_logger.info("Initialising game");
@@ -78,7 +172,7 @@ namespace EcoSort {
                 Object menuCamera = m_menuScene.createObject();
                 auto menuCameraComp = menuCamera.addComponent<CameraComponent>();
                 auto menuCameraTransform = menuCamera.addComponent<TransformComponent>();
-                menuCameraTransform->position = glm::vec3(-1.0f, 5.0f, -10.0f);
+                menuCameraTransform->position = glm::vec3(-100, 0.0f, 0.0f);
                 menuCameraTransform->rotation = glm::quatLookAt(-glm::normalize(menuCameraTransform->position), glm::vec3(0.0f, 1.0f, 0.0f));
 
                 Object sun = m_menuScene.createObject();
@@ -134,6 +228,9 @@ namespace EcoSort {
             quitButton.image->setData("res/UI/Quit.png");
 
             {
+                Object gameFlagObject = m_gameScene.createObject();
+                auto gameFlag = gameFlagObject.addComponent<IsGameFlagComponent>();
+                
                 Object gameCamera = m_gameScene.createObject();
                 auto gameCameraComp = gameCamera.addComponent<CameraComponent>();
                 auto gameCameraTransform = gameCamera.addComponent<TransformComponent>();
@@ -147,16 +244,46 @@ namespace EcoSort {
                 gameSunLight->type = LightComponent::LightType::DIRECTIONAL;
                 gameSunLight->colour = glm::vec3(0.5f);
 
-                Object test = m_gameScene.createObject();
+                /*Object test = m_gameScene.createObject();
                 auto testTransform = test.addComponent<TransformComponent>();
                 auto testMesh = test.addComponent<Mesh>();
                 auto testRigidBody = test.addComponent<RigidBodyComponent>();
+                auto testRubbish = test.addComponent<RubbishComponent>();
                 testTransform->position = glm::vec3(0.0f, 10.0f, -6 * 11.5f);
                 testTransform->scale = glm::vec3(5.0f);
                 test.setComponent(*AssetFetcher::meshFromPath("res/Models/Suzanne.obj"));
                 testMesh->setPrimaryTexture("res/Textures/img.png");
                 testRigidBody->bodyType = eDynamicBody;
-                testRigidBody->scale = { 10.0f, 10.0f, 10.0f };
+                testRigidBody->scale = { 10.0f, 10.0f, 10.0f };*/
+
+                Object recyclingCollector = m_gameScene.createObject();
+                auto recyclingCollectorTransform = recyclingCollector.addComponent<TransformComponent>();
+                auto recyclingCollectorRigidBody = recyclingCollector.addComponent<RigidBodyComponent>();
+                auto recyclingCollectorComp = recyclingCollector.addComponent<CollectorComponent>();
+                recyclingCollectorTransform->position = glm::vec3(-33.0f, 0.0f, (-6 * 11.5f) + (23.0f * 3));
+                recyclingCollectorRigidBody->bodyType = eStaticBody;
+                recyclingCollectorRigidBody->scale = { 25.0f, 100.0f, 23.0f };
+                recyclingCollectorComp->rubbishType = RubbishComponent::RubbishType::RECYCLING;
+
+                Object foodCollector = m_gameScene.createObject();
+                auto foodCollectorTransform = foodCollector.addComponent<TransformComponent>();
+                auto foodCollectorRigidBody = foodCollector.addComponent<RigidBodyComponent>();
+                auto foodCollectorComp = foodCollector.addComponent<CollectorComponent>();
+                foodCollectorTransform->position = glm::vec3(-33.0f, 0.0f, (-6 * -11.5f) + (23.0f * 5));
+                foodCollectorRigidBody->bodyType = eStaticBody;
+                foodCollectorRigidBody->scale = { 25.0f, 100.0f, 23.0f };
+                foodCollectorComp->rubbishType = RubbishComponent::RubbishType::FOOD;
+
+                Object rubbishCollector = m_gameScene.createObject();
+                auto rubbishCollectorTransform = rubbishCollector.addComponent<TransformComponent>();
+                auto rubbishCollectorRigidBody = rubbishCollector.addComponent<RigidBodyComponent>();
+                auto rubbishCollectorComp = rubbishCollector.addComponent<CollectorComponent>();
+                rubbishCollectorTransform->position = glm::vec3(0.0f, 0.0f, 75.0f);
+                rubbishCollectorRigidBody->bodyType = eStaticBody;
+                rubbishCollectorRigidBody->scale = { 25.0f, 100.0f, 23.0f };
+                rubbishCollectorComp->rubbishType = RubbishComponent::RubbishType::RUBBISH;
+
+                spawnRubbish(m_gameScene, glm::vec3(0.0f, 10.0f, -6 * 11.5f));
 
                 for (int i = 0; i < 7; i++) {
                     Object conveyor = m_gameScene.createObject();
@@ -165,7 +292,7 @@ namespace EcoSort {
                     auto conveyorRigidBody = conveyor.addComponent<RigidBodyComponent>();
                     conveyor.addComponent<ConveyorComponent>();
 
-                    conveyorTransform->position = glm::vec3(0.0f, 0.0f, (-6 * 11.5f) + 23 * i);
+                    conveyorTransform->position = glm::vec3(0.0f, 0.0f, (-6 * 11.5f) + (23.0f * i));
 
                     auto conveyorMeshPath = std::format("res/Models/{}Conveyor.obj", i == 3 || i == 5 ? "Short" : "");
                     
@@ -173,7 +300,6 @@ namespace EcoSort {
                     conveyorMesh->setPrimaryTexture("res/Textures/white.png");
                     conveyorRigidBody->bodyType = eStaticBody;
                     conveyorRigidBody->scale = { 25.0f, 3.0f, 23.0f };
-                    conveyorRigidBody->userData = new BOO::ComponentRef(conveyorTransform);
                     
                     Object light = m_gameScene.createObject();
                     auto lightTransform = light.addComponent<TransformComponent>();
@@ -245,20 +371,21 @@ namespace EcoSort {
 
                 // physics
 
-                auto physicsQuery = m_activeScene.findAll<RigidBodyComponent, TransformComponent>();
-                for (auto& [ rigidBody, transform ] : physicsQuery) {
+                for (auto& [ rigidBody, transform ] : m_activeScene.findAll<RigidBodyComponent, TransformComponent>()) {
                     
                     auto rotAxis = glm::axis(transform->rotation);
                     q3Vec3 q3RotationAxis = { rotAxis.x, rotAxis.y, rotAxis.z };
                     if (!rigidBody->body) {
                         q3BodyDef bodyDef;
 
-                        bodyDef.userData = rigidBody->userData;
+                        bodyDef.userData = new Object(m_activeScene, rigidBody.getEntity());
                         
                         bodyDef.position = { transform->position.x, transform->position.y, transform->position.z };
                         bodyDef.axis = q3RotationAxis;
                         bodyDef.angle = glm::angle(transform->rotation);
                         bodyDef.bodyType = rigidBody->bodyType;
+                        bodyDef.linearVelocity = rigidBody->initialVelocity;
+                        bodyDef.angularVelocity = rigidBody->initialAngularVelocity;
                         
                         rigidBody->body = m_physicsScene.CreateBody(bodyDef);
 
@@ -294,7 +421,7 @@ namespace EcoSort {
 
                 physicsClock.Stop();
 
-                for (auto& [ rigidBody, transform ] : physicsQuery) {
+                for (auto& [ rigidBody, transform ] : m_activeScene.findAll<RigidBodyComponent, TransformComponent>()) {
 
                     auto& newTransform = rigidBody->body->GetTransform();
                     glm::mat3 rotation = {
@@ -310,14 +437,14 @@ namespace EcoSort {
 
                 // game updating
 
-                for (auto& [ conveyorBody, otherBodies ] : touchingConveyors) {
-                    auto conveyorTransform = *static_cast<BOO::ComponentRef<TransformComponent>*>(conveyorBody->GetUserData());
+                for (auto& [ conveyor, conveyorTransform ] : m_activeScene.findAll<ConveyorComponent, TransformComponent>()) {
                     
                     auto rotationMatrix = glm::mat3_cast(conveyorTransform->rotation);
                     auto conveyorDirection = rotationMatrix * glm::vec3(0.0f, 0.0f, 1.0f);
 
-                    for (auto& otherBody : otherBodies) {
-                        otherBody->SetLinearVelocity({ conveyorDirection.x * 10, 0, conveyorDirection.z * 10 });
+                    for (auto& rubbishBody : conveyor->touchingRubbish) {
+                        if (!rubbishBody.valid()) continue;
+                        rubbishBody->body->SetLinearVelocity({ conveyorDirection.x * 10, 0, conveyorDirection.z * 10 });
                     }
                 }
 
@@ -325,15 +452,41 @@ namespace EcoSort {
                     if (!pusher->progress && !interface.getKeyEnabledState(pusher->activationKey)) continue;
                     pusher->progress += dt;
                     pusher->progress = glm::clamp(pusher->progress, 0.0f, 2.0f);
-                    auto newOffset = 26.5f * (glm::abs(pusher->progress - 1.0f) - 1.0f);
+                    auto newOffset = 28.0f * (glm::abs(pusher->progress - 1.0f) - 1.0f);
                     pusherTransform->position.x = newOffset;
                     if (pusher->progress >= 2.0f) pusher->progress = 0.0f;
+                }
+
+                static double spawnAccumulator = 0.0;
+                static double spawnDelay = 0.1;
+                spawnAccumulator += dt;
+                if (spawnAccumulator >= spawnDelay) {
+                    spawnAccumulator -= spawnDelay;
+                    auto isGameQuery = m_activeScene.findAll<IsGameFlagComponent>();
+                    if (isGameQuery.begin() == isGameQuery.end()) {
+                        Object rubbish = spawnRubbish(m_menuScene, glm::vec3(0, 70, q3RandomFloat(-60, 60)));
+                        rubbish.getComponent<RigidBodyComponent>()->initialAngularVelocity = {
+                            q3RandomFloat(-1.0f, 1.0f),
+                            q3RandomFloat(-1.0f, 1.0f),
+                            q3RandomFloat(-1.0f, 1.0f)
+                        };
+                    } else {
+                        spawnDelay = 2.0;
+                        spawnRubbish(m_gameScene, glm::vec3(0.0f, 10.0f, -5 * 11.5f));
+                    }
+                }
+
+                for (auto& [ _, transform ] : m_activeScene.findAll<RubbishComponent, TransformComponent>()) {
+                    if (transform->position.y < -200.0f) {
+                        Object object(m_activeScene, transform.getEntity());
+                        m_activeScene.removeObject(object);
+                    }
                 }
                 
                 if (playButton.isClicked) {
                     m_physicsScene.RemoveAllBodies();
 
-                    for (auto& [ rigidBody, transform ] : physicsQuery) {
+                    for (auto& [ rigidBody, transform ] : m_activeScene.findAll<RigidBodyComponent, TransformComponent>()) {
                         rigidBody->body = nullptr;
                     }
                     
@@ -356,6 +509,8 @@ namespace EcoSort {
                 }
             }
         }
+
+        m_logger.debug("{}", m_score);
 
         // Clean up GLFW
         glfwTerminate();

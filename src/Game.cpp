@@ -12,23 +12,25 @@
 namespace EcoSort {
     Game *Game::s_instance = nullptr;
 
+    int consumedBoxes = 0;
+    int totalBoxes = 3;
+
     void glfwErrorCallback(int error, const char* description) {
         static Logger logger("GLFW");
         logger.error("Error {}: {}", error, description);
     }
 
     void Game::BeginContact(const q3ContactConstraint* contact) {
-        // This will not work if i ever need anything else to have user data
 
         void* userDataA = contact->bodyA->GetUserData();
         void* userDataB = contact->bodyB->GetUserData();
 
         if (!userDataA || !userDataB) m_logger.error("Body is missing userData");
 
-        Object* objectA = static_cast<Object*>(userDataA);
-        Object* objectB = static_cast<Object*>(userDataB);
+        auto objectA = static_cast<Object*>(userDataA);
+        auto objectB = static_cast<Object*>(userDataB);
 
-        if (!objectA->valid() || !objectB->valid()) return;
+        if (!(objectA && objectA->valid()) || !(objectB && objectB->valid())) return;
 
         Object* conveyorObject = nullptr;
         Object* collectorObject = nullptr;
@@ -52,7 +54,12 @@ namespace EcoSort {
             auto rubbishComp = rubbishObject->getComponent<RubbishComponent>();
             auto rubbishBody = rubbishObject->getComponent<RigidBodyComponent>();
             if (collectorComp->rubbishType == rubbishComp->type) m_score++;
-            rubbishObject->destroy();
+            consumedBoxes++;
+            rubbishBody->body->SetTransform({
+                static_cast<float>(-pow(rubbishBody.getEntity() * 200, 3) - 100),
+                -100.0f,
+                0.0f
+            });
         }
     }
 
@@ -63,10 +70,10 @@ namespace EcoSort {
 
         if (!userDataA || !userDataB) m_logger.error("Body is missing userData");
 
-        Object* objectA = static_cast<Object*>(userDataA);
-        Object* objectB = static_cast<Object*>(userDataB);
+        auto objectA = static_cast<Object*>(userDataA);
+        auto objectB = static_cast<Object*>(userDataB);
 
-        if (!objectA->valid() || !objectB->valid()) return;
+        if (!(objectA && objectA->valid()) || !(objectB && objectB->valid())) return;
 
         Object* conveyorObject = nullptr;
         Object* collectorObject = nullptr;
@@ -85,15 +92,9 @@ namespace EcoSort {
             std::erase_if(
                 conveyorComp->touchingRubbish,
                 [&rubbishBody](BOO::ComponentRef<RigidBodyComponent>& other) -> bool {
-                    return rubbishBody.get() == other.get();
+                    return other.valid() && rubbishBody.get() == other.get();
                 }
             );
-        }
-
-        if (collectorObject && rubbishObject) {
-            auto collectorComp = collectorObject->getComponent<CollectorComponent>();
-            auto rubbishComp = rubbishObject->getComponent<RubbishComponent>();
-            if (collectorComp->rubbishType == rubbishComp->type) m_score--;
         }
         
     }
@@ -165,6 +166,7 @@ namespace EcoSort {
             m_logger.info("Initialised window");
 
             m_physicsScene.SetContactListener(this);
+            m_physicsScene.SetEnableFriction(false);
 
             // MAIN MENU -----------------------------------------------------|>
 
@@ -234,33 +236,25 @@ namespace EcoSort {
                 Object gameCamera = m_gameScene.createObject();
                 auto gameCameraComp = gameCamera.addComponent<CameraComponent>();
                 auto gameCameraTransform = gameCamera.addComponent<TransformComponent>();
-                gameCameraTransform->position = glm::vec3(-150.0f, 75.0f, 0.0f);
+                gameCameraTransform->position = glm::vec3(-180.0f, 75.0f, 30.0f);
                 gameCameraTransform->rotation = glm::quatLookAt(-glm::normalize(gameCameraTransform->position), glm::vec3(0.0f, 1.0f, 0.0f));
 
                 Object gameSun = m_gameScene.createObject();
                 auto gameSunTransform = gameSun.addComponent<TransformComponent>();
                 auto gameSunLight = gameSun.addComponent<LightComponent>();
-                gameSunTransform->rotation = glm::quatLookAt(-glm::normalize((gameCameraTransform->position - glm::vec3(10.0f))), glm::vec3(0.0f, 1.0f, 0.0f));
+                gameSunTransform->rotation = glm::quatLookAt(-glm::normalize(gameCameraTransform->position + glm::vec3(0.0f, 10.0f, -10.0f)), glm::vec3(0.0f, 1.0f, 0.0f));
                 gameSunLight->type = LightComponent::LightType::DIRECTIONAL;
-                gameSunLight->colour = glm::vec3(0.5f);
-
-                /*Object test = m_gameScene.createObject();
-                auto testTransform = test.addComponent<TransformComponent>();
-                auto testMesh = test.addComponent<Mesh>();
-                auto testRigidBody = test.addComponent<RigidBodyComponent>();
-                auto testRubbish = test.addComponent<RubbishComponent>();
-                testTransform->position = glm::vec3(0.0f, 10.0f, -6 * 11.5f);
-                testTransform->scale = glm::vec3(5.0f);
-                test.setComponent(*AssetFetcher::meshFromPath("res/Models/Suzanne.obj"));
-                testMesh->setPrimaryTexture("res/Textures/img.png");
-                testRigidBody->bodyType = eDynamicBody;
-                testRigidBody->scale = { 10.0f, 10.0f, 10.0f };*/
+                gameSunLight->colour = glm::vec3(0.7f);
 
                 Object recyclingCollector = m_gameScene.createObject();
                 auto recyclingCollectorTransform = recyclingCollector.addComponent<TransformComponent>();
                 auto recyclingCollectorRigidBody = recyclingCollector.addComponent<RigidBodyComponent>();
                 auto recyclingCollectorComp = recyclingCollector.addComponent<CollectorComponent>();
+                auto recyclingCollectorMesh = recyclingCollector.addComponent<Mesh>();
+                recyclingCollector.setComponent(*AssetFetcher::meshFromPath("res/Models/Cube.obj"));
+                recyclingCollectorMesh->setPrimaryTexture("res/Textures/recycling.jpg");
                 recyclingCollectorTransform->position = glm::vec3(-33.0f, 0.0f, (-6 * 11.5f) + (23.0f * 3));
+                recyclingCollectorTransform->scale = glm::vec3(12.5f, 3.0f, 11.5f);
                 recyclingCollectorRigidBody->bodyType = eStaticBody;
                 recyclingCollectorRigidBody->scale = { 25.0f, 100.0f, 23.0f };
                 recyclingCollectorComp->rubbishType = RubbishComponent::RubbishType::RECYCLING;
@@ -269,7 +263,11 @@ namespace EcoSort {
                 auto foodCollectorTransform = foodCollector.addComponent<TransformComponent>();
                 auto foodCollectorRigidBody = foodCollector.addComponent<RigidBodyComponent>();
                 auto foodCollectorComp = foodCollector.addComponent<CollectorComponent>();
-                foodCollectorTransform->position = glm::vec3(-33.0f, 0.0f, (-6 * -11.5f) + (23.0f * 5));
+                auto foodCollectorMesh = foodCollector.addComponent<Mesh>();
+                foodCollector.setComponent(*AssetFetcher::meshFromPath("res/Models/Cube.obj"));
+                foodCollectorMesh->setPrimaryTexture("res/Textures/food.png");
+                foodCollectorTransform->position = glm::vec3(-33.0f, 0.0f, (-6 * -11.5f) - 23.0f);
+                foodCollectorTransform->scale = glm::vec3(12.5f, 3.0f, 11.5f);
                 foodCollectorRigidBody->bodyType = eStaticBody;
                 foodCollectorRigidBody->scale = { 25.0f, 100.0f, 23.0f };
                 foodCollectorComp->rubbishType = RubbishComponent::RubbishType::FOOD;
@@ -278,12 +276,14 @@ namespace EcoSort {
                 auto rubbishCollectorTransform = rubbishCollector.addComponent<TransformComponent>();
                 auto rubbishCollectorRigidBody = rubbishCollector.addComponent<RigidBodyComponent>();
                 auto rubbishCollectorComp = rubbishCollector.addComponent<CollectorComponent>();
-                rubbishCollectorTransform->position = glm::vec3(0.0f, 0.0f, 75.0f);
+                auto rubbishCollectorMesh = rubbishCollector.addComponent<Mesh>();
+                rubbishCollector.setComponent(*AssetFetcher::meshFromPath("res/Models/Cube.obj"));
+                rubbishCollectorMesh->setPrimaryTexture("res/Textures/rubbish.jpg");
+                rubbishCollectorTransform->position = glm::vec3(0.0f, 0.0f, 96.0f);
+                rubbishCollectorTransform->scale = glm::vec3(12.5f, 3.0f, 11.5f);
                 rubbishCollectorRigidBody->bodyType = eStaticBody;
                 rubbishCollectorRigidBody->scale = { 25.0f, 100.0f, 23.0f };
                 rubbishCollectorComp->rubbishType = RubbishComponent::RubbishType::RUBBISH;
-
-                spawnRubbish(m_gameScene, glm::vec3(0.0f, 10.0f, -6 * 11.5f));
 
                 for (int i = 0; i < 7; i++) {
                     Object conveyor = m_gameScene.createObject();
@@ -292,7 +292,8 @@ namespace EcoSort {
                     auto conveyorRigidBody = conveyor.addComponent<RigidBodyComponent>();
                     conveyor.addComponent<ConveyorComponent>();
 
-                    conveyorTransform->position = glm::vec3(0.0f, 0.0f, (-6 * 11.5f) + (23.0f * i));
+                    conveyorTransform->position = glm::vec3(0.0f, 0, (-6 * 11.5f) + (23.0f * i));
+                    conveyorTransform->rotation = glm::angleAxis(-glm::pi<float>() / 192, glm::vec3(1.0f, 0.0f, 0.0f));
 
                     auto conveyorMeshPath = std::format("res/Models/{}Conveyor.obj", i == 3 || i == 5 ? "Short" : "");
                     
@@ -315,13 +316,13 @@ namespace EcoSort {
                         auto pusherMesh = pusher.addComponent<Mesh>();
                         auto pusherRigidBody = pusher.addComponent<RigidBodyComponent>();
                         auto pusherComp = pusher.addComponent<PusherComponent>();
-                        pusherTransform->position = glm::vec3(0.0f, 0.0f, (-6 * 11.5f) + 23 * i);
+                        pusherTransform->position = glm::vec3(0.0f, 0.0f, (-6 * 11.5f) + 23.0f * i);
                         pusherTransform->rotation = glm::angleAxis(glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f));
                         pusher.setComponent(*AssetFetcher::meshFromPath("res/Models/Pusher.obj"));
                         pusherMesh->setPrimaryTexture("res/Textures/white.png");
                         pusherRigidBody->bodyType = eStaticBody;
-                        pusherRigidBody->scale = { 0.15, 100.0f, 23.0f };
-                        pusherRigidBody->offset = { -12.5f, 0, 0.0f };
+                        pusherRigidBody->scale = { 1.15, 100.0f, 23.0f };
+                        pusherRigidBody->offset = { -13.5f, 0, 0.0f };
                         pusherComp->activationKey = i == 3 ? Key::Q : Key::E;
                     }
                 }
@@ -333,7 +334,7 @@ namespace EcoSort {
             Clock physicsClock;
 
             // While the window is open, i.e. the operating system has not requested for it to be closed.
-            while (window.isOpen()) {
+            while (window.isOpen() && totalBoxes > consumedBoxes) {
 
                 double dt = glfwGetTime() - startTime;
                 startTime = glfwGetTime();
@@ -457,6 +458,8 @@ namespace EcoSort {
                     if (pusher->progress >= 2.0f) pusher->progress = 0.0f;
                 }
 
+                static int spawnedBoxes = 0;
+
                 static double spawnAccumulator = 0.0;
                 static double spawnDelay = 0.1;
                 spawnAccumulator += dt;
@@ -470,9 +473,10 @@ namespace EcoSort {
                             q3RandomFloat(-1.0f, 1.0f),
                             q3RandomFloat(-1.0f, 1.0f)
                         };
-                    } else {
-                        spawnDelay = 2.0;
-                        spawnRubbish(m_gameScene, glm::vec3(0.0f, 10.0f, -5 * 11.5f));
+                    } else if (totalBoxes > spawnedBoxes) {
+                        spawnDelay = 5.0;
+                        spawnRubbish(m_activeScene, glm::vec3(0.0f, 10.0f, -5 * 11.5f));
+                        spawnedBoxes++;
                     }
                 }
 
@@ -510,7 +514,7 @@ namespace EcoSort {
             }
         }
 
-        m_logger.debug("{}", m_score);
+        m_logger.info("\n\n\nGame score: {}", m_score);
 
         // Clean up GLFW
         glfwTerminate();

@@ -50,3 +50,6 @@ res/Textures/food0.png filter=lfs diff=lfs merge=lfs -text
 res/Textures/recycling0.png filter=lfs diff=lfs merge=lfs -text
 res/Textures/recycling1.png filter=lfs diff=lfs merge=lfs -text
 res/Textures/recycling2.png filter=lfs diff=lfs merge=lfs -text
+res/Textures/rubbish.jpg filter=lfs diff=lfs merge=lfs -text
+res/Textures/recycling.jpg filter=lfs diff=lfs merge=lfs -text
+res/Textures/food.png filter=lfs diff=lfs merge=lfs -text

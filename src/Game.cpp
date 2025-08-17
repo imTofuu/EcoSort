@@ -21,7 +21,9 @@ namespace EcoSort {
     }
 
     void Game::BeginContact(const q3ContactConstraint* contact) {
-
+        
+        // Validate and convert user data to objects
+        
         void* userDataA = contact->bodyA->GetUserData();
         void* userDataB = contact->bodyB->GetUserData();
 
@@ -42,13 +44,18 @@ namespace EcoSort {
         if (objectB->getComponent<CollectorComponent>()) collectorObject = objectB;
         if (objectA->getComponent<RubbishComponent>()) rubbishObject = objectA;
         if (objectB->getComponent<RubbishComponent>()) rubbishObject = objectB;
-        
+
+        // These are collision cases for different interactions.
+
+        // Add rubbish to a list in a conveyor so its velocity can be set every frame.
         if (conveyorObject && rubbishObject) {
             auto conveyorComp = conveyorObject->getComponent<ConveyorComponent>();
             auto rubbishBody = rubbishObject->getComponent<RigidBodyComponent>();
             conveyorComp->touchingRubbish.emplace_back(rubbishBody);
         }
 
+        // Increase the players score if they got the rubbish in the correct collector and move boxes into a unique spot
+        // far down so they can be deleted in the game loop.
         if (collectorObject && rubbishObject) {
             auto collectorComp = collectorObject->getComponent<CollectorComponent>();
             auto rubbishComp = rubbishObject->getComponent<RubbishComponent>();
@@ -65,6 +72,8 @@ namespace EcoSort {
 
     void Game::EndContact(const q3ContactConstraint* contact) {
 
+        // Most of this function is the same as above
+
         void* userDataA = contact->bodyA->GetUserData();
         void* userDataB = contact->bodyB->GetUserData();
 
@@ -89,6 +98,8 @@ namespace EcoSort {
         if (conveyorObject && rubbishObject) {
             auto conveyorComp = conveyorObject->getComponent<ConveyorComponent>();
             auto rubbishBody = rubbishObject->getComponent<RigidBodyComponent>();
+            // I can't think of a way to implement an equals operator for a ComponentRef (i the BOO library) so I use
+            // std::erase_if with my own lambda predicate that compares the memory addresses of the two components.
             std::erase_if(
                 conveyorComp->touchingRubbish,
                 [&rubbishBody](BOO::ComponentRef<RigidBodyComponent>& other) -> bool {
@@ -165,15 +176,33 @@ namespace EcoSort {
 #endif
             m_logger.info("Initialised window");
 
+            // Game extends q3ContactListener so this can be used since that was the most convenient way I could
+            // implement collision detection with this library and not making 800 new files. Game::BeginContact will be
+            // called when any two bodies collide, and Game::EndContact will be called when they stop
             m_physicsScene.SetContactListener(this);
+            // This is more fun
             m_physicsScene.SetEnableFriction(false);
+
+            m_logger.info("Setting up main menu");
 
             // MAIN MENU -----------------------------------------------------|>
 
+            // This scope prevents accidentally referencing these objects where they are not supposed to be, since
+            // objects can be safely deleted without destroying object in the scene.
             {
+                // This object code is repeated many times in this file. An object references an entity in an entity
+                // component system, by storing the entity ID and the scene. Object in reality is a wrapper object for
+                // an entity, only providing some shortcut functions for accessing components and self deletion.
                 Object menuCamera = m_menuScene.createObject();
+                // By using the data stored in object, a BOO::ComponentRef can be created, which is similar to the
+                // object class since it stores an entity ID and a scene. The ref will access components by looking up
+                // the entity ID in the scene, through the maps and vectors that are required to find it, instead of
+                // just storing a reference to the component since references and pointers to elements in vectors become
+                // invalid when the vector is resized.
                 auto menuCameraComp = menuCamera.addComponent<CameraComponent>();
                 auto menuCameraTransform = menuCamera.addComponent<TransformComponent>();
+                // BOO::ComponentRef overloads the -> operator for ease, which just returns a pointer to the current
+                // position of the component.
                 menuCameraTransform->position = glm::vec3(-100, 0.0f, 0.0f);
                 menuCameraTransform->rotation = glm::quatLookAt(-glm::normalize(menuCameraTransform->position), glm::vec3(0.0f, 1.0f, 0.0f));
 
@@ -199,6 +228,10 @@ namespace EcoSort {
             };
 
             // This is the worst code maybe i have ever written
+            // I don't know why I made GUIs be stored in another component, I think I was going to do something with it,
+            // but I can't remember, and it's a bit late now. menuListComp is a vector of shared pointers to pairs of
+            // GUIComponent and Transform2DComponent. In other words an owning reference to a key value pair of a
+            // GUI element and its transform relative to the GUI frame.
             auto& [ playButton, playButtonTransform ] =
                 *menuListComp->guis.emplace_back(
                     std::make_shared<std::pair<GUIComponent, Transform2DComponent>>()
@@ -229,6 +262,10 @@ namespace EcoSort {
             quitButton.image = std::make_shared<Texture>();
             quitButton.image->setData("res/UI/Quit.png");
 
+            m_logger.info("Setting up game scene");
+
+            // Lots more of initialising scenes, which is in essence the same code as above, but with different self-
+            // explanatory components.
             {
                 Object gameFlagObject = m_gameScene.createObject();
                 auto gameFlag = gameFlagObject.addComponent<IsGameFlagComponent>();
@@ -321,8 +358,8 @@ namespace EcoSort {
                         pusher.setComponent(*AssetFetcher::meshFromPath("res/Models/Pusher.obj"));
                         pusherMesh->setPrimaryTexture("res/Textures/white.png");
                         pusherRigidBody->bodyType = eStaticBody;
-                        pusherRigidBody->scale = { 1.15, 100.0f, 23.0f };
-                        pusherRigidBody->offset = { -13.5f, 0, 0.0f };
+                        pusherRigidBody->scale = { 3.15, 100.0f, 23.0f };
+                        pusherRigidBody->offset = { -15.5f, 0, 0.0f };
                         pusherComp->activationKey = i == 3 ? Key::Q : Key::E;
                     }
                 }
@@ -333,7 +370,8 @@ namespace EcoSort {
             
             Clock physicsClock;
 
-            // While the window is open, i.e. the operating system has not requested for it to be closed.
+            // While the window is open, i.e. the operating system has not requested for it to be closed and before the
+            // last box has been consumed by a collector.
             while (window.isOpen() && totalBoxes > consumedBoxes) {
 
                 double dt = glfwGetTime() - startTime;
@@ -344,12 +382,22 @@ namespace EcoSort {
 
                 // Do gui stuff
 
+                // This chunk of code is what gets the state of each button. It does a simple rectangle intersection
+                // test with the position of the mouse, and the position and size of the button.
+
                 Interface& interface = window.getInterface();
 
                 auto mouseX = interface.getMouseX();
                 auto mouseY = interface.getMouseY();
                 auto mouseEnabled = interface.getMouseButtonEnabledState(MouseButton::LEFT);
 
+                // Several queries are also made in the game loop. Queries are made with a variant of the Scene::find...
+                // methods. The variants have different requirements for the components that are present in an entity
+                // for it to be returned in the query. The 'All' variant is used exclusively in this project, and it
+                // that an entity contains at least all the components specified in order to be returned.
+                // BOO::QueryResult is a wrapper type of vector of tuples of the types specified in the query.
+                // It defines begin and end methods, which return iterators, so it can be iterated and tuples can be
+                // expressed as structured bindings which makes code very readable and clean.
                 for (auto& [ guiFrame, frameTransform ] : m_activeScene.findAll<GUIFrameComponent, Transform2DComponent>()) {
 
                     TransformComponent absoluteFrameTransform = window.getRenderer()->getAbsoluteTransform2D(*frameTransform);
@@ -372,6 +420,7 @@ namespace EcoSort {
 
                 // physics
 
+                // This initialises and updates bodies in the physics scene.
                 for (auto& [ rigidBody, transform ] : m_activeScene.findAll<RigidBodyComponent, TransformComponent>()) {
                     
                     auto rotAxis = glm::axis(transform->rotation);
@@ -379,6 +428,7 @@ namespace EcoSort {
                     if (!rigidBody->body) {
                         q3BodyDef bodyDef;
 
+                        // This is a memory leak
                         bodyDef.userData = new Object(m_activeScene, rigidBody.getEntity());
                         
                         bodyDef.position = { transform->position.x, transform->position.y, transform->position.z };
@@ -410,6 +460,8 @@ namespace EcoSort {
 
                 float time = physicsClock.Start();
 
+                // Arbitrary number of iterations that was picked after I closed my eyes and pressed my keyboard. This
+                // has no meaning or thought behind it.
                 m_physicsScene.SetIterations(8);
 
                 static float accumulator = 0.0f;
@@ -422,6 +474,7 @@ namespace EcoSort {
 
                 physicsClock.Stop();
 
+                // This will synchronise all the transforms with the physics bodies.
                 for (auto& [ rigidBody, transform ] : m_activeScene.findAll<RigidBodyComponent, TransformComponent>()) {
 
                     auto& newTransform = rigidBody->body->GetTransform();
@@ -438,6 +491,7 @@ namespace EcoSort {
 
                 // game updating
 
+                // This moves all the rubbish touching a conveyor in the forward direction of the conveyor
                 for (auto& [ conveyor, conveyorTransform ] : m_activeScene.findAll<ConveyorComponent, TransformComponent>()) {
                     
                     auto rotationMatrix = glm::mat3_cast(conveyorTransform->rotation);
@@ -449,7 +503,9 @@ namespace EcoSort {
                     }
                 }
 
+                // This moves the pushers across the conveyors
                 for (auto& [ pusher, pusherTransform, pusherRigidBody ] : m_gameScene.findAll<PusherComponent, TransformComponent, RigidBodyComponent>()) {
+                    // Intended narrowing conversion since the progress will be 0 when the pusher is not active.
                     if (!pusher->progress && !interface.getKeyEnabledState(pusher->activationKey)) continue;
                     pusher->progress += dt;
                     pusher->progress = glm::clamp(pusher->progress, 0.0f, 2.0f);
@@ -463,6 +519,8 @@ namespace EcoSort {
                 static double spawnAccumulator = 0.0;
                 static double spawnDelay = 0.1;
                 spawnAccumulator += dt;
+                // Spawning multiple boxes at the same location makes qu3e a bit angry so I cap to only spawn 1 by using
+                // an if instead of a while.
                 if (spawnAccumulator >= spawnDelay) {
                     spawnAccumulator -= spawnDelay;
                     auto isGameQuery = m_activeScene.findAll<IsGameFlagComponent>();
@@ -474,19 +532,26 @@ namespace EcoSort {
                             q3RandomFloat(-1.0f, 1.0f)
                         };
                     } else if (totalBoxes > spawnedBoxes) {
+                        // Change the spawn delay once the game scene is active since this piece of code is also used
+                        // for main menu decoration.
                         spawnDelay = 5.0;
                         spawnRubbish(m_activeScene, glm::vec3(0.0f, 10.0f, -5 * 11.5f));
                         spawnedBoxes++;
                     }
                 }
 
+                // Delete boxes that have fallen too far, since allocating hundreds of textures with tens of thousands
+                // of pixels uses a considerable amount of memory. If I cached textures that wouldn't be a problem but
+                // that's time I have to spend.
                 for (auto& [ _, transform ] : m_activeScene.findAll<RubbishComponent, TransformComponent>()) {
                     if (transform->position.y < -200.0f) {
                         Object object(m_activeScene, transform.getEntity());
                         m_activeScene.removeObject(object);
                     }
                 }
-                
+
+                // qu3e did not appreciate having multiple physics scenes, and since it is a small library it was hard
+                // to find out why. This was the easiest way I found to fix the problem.
                 if (playButton.isClicked) {
                     m_physicsScene.RemoveAllBodies();
 
@@ -514,7 +579,7 @@ namespace EcoSort {
             }
         }
 
-        m_logger.info("\n\n\nGame score: {}", m_score);
+        m_logger.info("\n\n\nGame score: {} / {}", m_score, totalBoxes);
 
         // Clean up GLFW
         glfwTerminate();

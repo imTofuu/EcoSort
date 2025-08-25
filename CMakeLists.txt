@@ -55,6 +55,8 @@ add_executable(EcoSort
         src/Graphics/RenderTarget.cpp
 )
 
+add_compile_options(-std=c++20)
+
 add_dependencies(EcoSort copy_assets)
 
 # Add include directories to the EcoSort target, which will be used to find header files when they
@@ -102,6 +104,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
                 RG_DEBUG_SHOW_LIGHTS
         )
 endif()
+
+
 
 # Configure installation to go into a folder with the resources.
 install(TARGETS EcoSort
